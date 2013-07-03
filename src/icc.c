@@ -133,6 +133,15 @@ icc_to_gamma (XRRCrtcGamma *gamma, GBytes *icc)
 	cmsCloseProfile (prof);
 }
 
+
+static inline void
+colord2lcms (cmsCIExyY *dest, const CdColorYxy *src)
+{
+	dest->x = src->x;
+	dest->y = src->y;
+	dest->Y = src->Y;
+}
+
 GBytes *
 icc_from_edid (const struct edid *edid)
 {
@@ -141,14 +150,21 @@ icc_from_edid (const struct edid *edid)
 	cmsToneCurve *curve[3] = { NULL, NULL, NULL };
 	cmsHANDLE dict = NULL;
 	cmsUInt32Number size;
+	cmsCIExyYTRIPLE chroma;
+	cmsCIExyY white;
 	gpointer data;
 	gboolean ret;
 
 	if (! edid)
 		return NULL;
 
+	colord2lcms (&chroma.Red, &edid->red);
+	colord2lcms (&chroma.Green, &edid->green);
+	colord2lcms (&chroma.Blue, &edid->blue);
+	colord2lcms (&white, &edid->white);
+
 	curve[0] = curve[1] = curve[2] = cmsBuildGamma (NULL, edid->gamma);
-	prof = cmsCreateRGBProfile (&edid->white, &edid->chroma, curve);
+	prof = cmsCreateRGBProfile (&white, &chroma, curve);
 	if (! prof) {
 		g_critical ("unable to create profile from EDID");
 		goto out;

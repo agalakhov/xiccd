@@ -27,7 +27,7 @@
 
 
 #include <glib.h>
-#include <lcms2.h>
+#include <colord.h>
 
 #ifndef PNP_IDS
 #define PNP_IDS "/usr/share/hwdata/pnp.ids"
@@ -167,15 +167,15 @@ edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolea
 	edid->srgb = (d[24] & (1 << 2)) ? TRUE : FALSE;
 
 	/* Color management data */
-	edid->chroma.Red.x   = fraction (d[25], 6, d[27]);
-	edid->chroma.Red.y   = fraction (d[25], 4, d[28]);
-	edid->chroma.Green.x = fraction (d[25], 2, d[29]);
-	edid->chroma.Green.y = fraction (d[25], 0, d[30]);
-	edid->chroma.Blue.x  = fraction (d[26], 6, d[31]);
-	edid->chroma.Blue.y  = fraction (d[26], 4, d[32]);
-	edid->white.x        = fraction (d[26], 2, d[33]);
-	edid->white.y        = fraction (d[26], 0, d[34]);
-	edid->white.Y        = 1.0;
+	edid->red.x   = fraction (d[25], 6, d[27]);
+	edid->red.y   = fraction (d[25], 4, d[28]);
+	edid->green.x = fraction (d[25], 2, d[29]);
+	edid->green.y = fraction (d[25], 0, d[30]);
+	edid->blue.x  = fraction (d[26], 6, d[31]);
+	edid->blue.y  = fraction (d[26], 4, d[32]);
+	edid->white.x = fraction (d[26], 2, d[33]);
+	edid->white.y = fraction (d[26], 0, d[34]);
+	edid->white.Y = 1.0;
 
 	/* Extended info */
 	if (use_dmi) {
@@ -196,9 +196,9 @@ edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolea
 	g_debug ("EDID: monitor vendor=[%s]'%s' product='%s' serial='%s'",
 		 edid->pnpid, edid->vendor, edid->model, edid->serial);
 	g_debug ("EDID: red=(%f,%f) green=(%f,%f) blue=(%f,%f) white=(%f,%f) gamma=%f",
-		 edid->chroma.Red.x, edid->chroma.Red.y,
-		 edid->chroma.Green.x, edid->chroma.Green.y,
-		 edid->chroma.Blue.x, edid->chroma.Blue.y,
+		 edid->red.x, edid->red.y,
+		 edid->green.x, edid->green.y,
+		 edid->blue.x, edid->blue.y,
 		 edid->white.x, edid->white.y,
 		 edid->gamma);
 }

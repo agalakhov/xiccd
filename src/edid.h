@@ -21,7 +21,7 @@
 #define __EDID_H__
 
 #include <glib.h>
-#include <lcms2.h>
+#include <colord.h>
 
 struct edid {
 	const gchar	*cksum;
@@ -34,8 +34,10 @@ struct edid {
 
 	gboolean	srgb;
 
-	cmsCIExyYTRIPLE	chroma;
-	cmsCIExyY	white;
+	CdColorYxy	red;
+	CdColorYxy	green;
+	CdColorYxy	blue;
+	CdColorYxy	white;
 	double		gamma;
 };
 

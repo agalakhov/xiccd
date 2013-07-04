@@ -31,57 +31,6 @@
 
 #include <X11/extensions/Xrandr.h>
 
-static wchar_t *
-utf2wchar (const char *text)
-{
-	wchar_t *retval = NULL;
-	size_t len;
-	size_t clen;
-
-	if (! text)
-		return NULL;
-
-	len = mbstowcs (NULL, text, 0);
-	if (len == (size_t) -1) {
-		g_critical ("invalid multibyte sequence");
-		return retval;
-	}
-
-	retval = g_new0 (wchar_t, len + 1);
-	clen = mbstowcs (retval, text, len);
-	g_assert (clen == len);
-	return retval;
-}
-
-static gboolean
-write_cms_tag (cmsHPROFILE prof, cmsTagSignature tag, const gchar *val)
-{
-	gboolean retval = FALSE;
-	cmsMLU *mlu = cmsMLUalloc (0, 1);
-	cmsMLUsetASCII (mlu, "en", "US", val);
-	retval = cmsWriteTag (prof, tag, mlu);
-	cmsMLUfree (mlu);
-	return retval;
-}
-
-static gboolean
-add_cms_dict_entry (cmsHANDLE dict, const gchar *key, const gchar *val)
-{
-	gboolean retval = FALSE;
-	wchar_t *wkey;
-	wchar_t *wval;
-	wkey = utf2wchar (key);
-	wval = utf2wchar (val);
-	if (wkey && wval)
-		retval = cmsDictAddEntry (dict, wkey, wval, NULL, NULL);
-	if (wval)
-		g_free (wval);
-	if (wkey)
-		g_free (wkey);
-	return retval;
-}
-
-
 static void
 reset_gamma (XRRCrtcGamma *gamma)
 {
@@ -134,102 +83,47 @@ icc_to_gamma (XRRCrtcGamma *gamma, GBytes *icc)
 }
 
 
-static inline void
-colord2lcms (cmsCIExyY *dest, const CdColorYxy *src)
-{
-	dest->x = src->x;
-	dest->y = src->y;
-	dest->Y = src->Y;
-}
-
 CdIcc *
 icc_from_edid (const struct edid *edid)
 {
-	CdIcc *retval = NULL;
-	cmsHPROFILE prof = NULL;
-	cmsToneCurve *curve[3] = { NULL, NULL, NULL };
-	cmsHANDLE dict = NULL;
-	cmsCIExyYTRIPLE chroma;
-	cmsCIExyY white;
+	CdIcc *icc;
+	GError *err = NULL;
 	gboolean ret;
 
 	if (! edid)
 		return NULL;
 
-	colord2lcms (&chroma.Red, &edid->red);
-	colord2lcms (&chroma.Green, &edid->green);
-	colord2lcms (&chroma.Blue, &edid->blue);
-	colord2lcms (&white, &edid->white);
-
-	curve[0] = curve[1] = curve[2] = cmsBuildGamma (NULL, edid->gamma);
-	prof = cmsCreateRGBProfile (&white, &chroma, curve);
-	if (! prof) {
-		g_critical ("unable to create profile from EDID");
-		goto out;
-	}
-
-	cmsSetColorSpace (prof, cmsSigRgbData);
-	cmsSetPCS (prof, cmsSigXYZData);
-	cmsSetHeaderRenderingIntent (prof, INTENT_PERCEPTUAL);
-	cmsSetDeviceClass (prof, cmsSigDisplayClass);
-
-	ret = write_cms_tag (prof, cmsSigCopyrightTag,
-			     /* deliberately not translated */
-			     "This profile is free of known copyright restrictions.");
+	icc = cd_icc_new ();
+	ret = cd_icc_create_from_edid (icc, edid->gamma,
+				       &edid->red, &edid->green, &edid->blue, &edid->white,
+				       &err);
 	if (! ret) {
-		g_critical ("failed to write copyright");
-		goto out;
+		g_critical ("unable to create profile from EDID: %s", err->message);
+		g_error_free (err);
+		return NULL;
 	}
 
-	write_cms_tag (prof, cmsSigDeviceModelDescTag, edid->model);
-	write_cms_tag (prof, cmsSigProfileDescriptionTag, edid->model);
-	write_cms_tag (prof, cmsSigDeviceMfgDescTag, edid->vendor);
+	cd_icc_set_kind (icc, CD_PROFILE_KIND_DISPLAY_DEVICE);
 
-	dict = cmsDictAlloc (NULL);
+	/* deliberately not translated */
+	cd_icc_set_copyright (icc, NULL, "This profile is free of known copyright restrictions.");
 
-	add_cms_dict_entry (dict, CD_PROFILE_METADATA_CMF_PRODUCT, PACKAGE);
-	add_cms_dict_entry (dict, CD_PROFILE_METADATA_CMF_BINARY, g_get_prgname ());
-	add_cms_dict_entry (dict, CD_PROFILE_METADATA_CMF_VERSION, VERSION);
+	cd_icc_set_description (icc, NULL, edid->model);
+	cd_icc_set_model (icc, NULL, edid->model);
+	cd_icc_set_manufacturer (icc, NULL, edid->vendor);
 
-	add_cms_dict_entry (dict, CD_PROFILE_METADATA_DATA_SOURCE,
-			    CD_PROFILE_METADATA_DATA_SOURCE_EDID);
+	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_CMF_PRODUCT, PACKAGE);
+	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_CMF_BINARY, g_get_prgname ());
+	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_CMF_VERSION, VERSION);
 
-	add_cms_dict_entry (dict, CD_PROFILE_METADATA_EDID_MD5, edid->cksum);
-	add_cms_dict_entry (dict, CD_PROFILE_METADATA_EDID_MODEL, edid->model);
-	add_cms_dict_entry (dict, CD_PROFILE_METADATA_EDID_SERIAL, edid->serial);
-	add_cms_dict_entry (dict, CD_PROFILE_METADATA_EDID_MNFT, edid->pnpid);
-	add_cms_dict_entry (dict, CD_PROFILE_METADATA_EDID_VENDOR, edid->vendor);
+	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MD5, edid->cksum);
+	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MODEL, edid->model);
+	if (edid->serial)
+		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_SERIAL, edid->serial);
+	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MNFT, edid->pnpid);
+	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_VENDOR, edid->vendor);
 
-	ret = cmsWriteTag(prof, cmsSigMetaTag, dict);
-	if (! ret) {
-		g_critical ("unable to write profile metadata");
-		goto out;
-	}
-
-	ret = cmsMD5computeID (prof);
-	if (! ret) {
-		g_critical ("unable to compute profile MD5");
-		goto out;
-	}
-
-	retval = cd_icc_new ();
-	ret = cd_icc_load_handle (retval, prof, CD_ICC_LOAD_FLAGS_NONE, NULL);
-	if (! ret) {
-		g_critical ("cd_icc_load_handle failed");
-		g_object_unref (retval);
-		retval = NULL;
-		goto out;
-	}
-
-out:
-	if (prof && ! retval)
-		cmsCloseProfile (prof);
-	if (curve[0])
-		cmsFreeToneCurve (curve[0]);
-	if (dict)
-		cmsDictFree (dict);
-
-	return retval;
+	return icc;
 }
 
 static gchar *

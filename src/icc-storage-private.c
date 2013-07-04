@@ -284,7 +284,7 @@ icc_storage_private_push_edid (struct icc_storage *stor, const struct edid *edid
 {
 	gchar *tmpname;
 	GFile *file;
-	GBytes *icc;
+	GBytes *icc = NULL;
 	GError *err = NULL;
 	gboolean ret;
 
@@ -318,6 +318,8 @@ icc_storage_private_push_edid (struct icc_storage *stor, const struct edid *edid
 	do_add_file (stor, file);
 
 out:
+	if (icc)
+		g_bytes_unref (icc);
 	g_object_unref (file);
 }
 

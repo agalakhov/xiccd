@@ -142,17 +142,15 @@ colord2lcms (cmsCIExyY *dest, const CdColorYxy *src)
 	dest->Y = src->Y;
 }
 
-GBytes *
+CdIcc *
 icc_from_edid (const struct edid *edid)
 {
-	GBytes *retval = NULL;
+	CdIcc *retval = NULL;
 	cmsHPROFILE prof = NULL;
 	cmsToneCurve *curve[3] = { NULL, NULL, NULL };
 	cmsHANDLE dict = NULL;
-	cmsUInt32Number size;
 	cmsCIExyYTRIPLE chroma;
 	cmsCIExyY white;
-	gpointer data;
 	gboolean ret;
 
 	if (! edid)
@@ -214,23 +212,17 @@ icc_from_edid (const struct edid *edid)
 		goto out;
 	}
 
-	ret = cmsSaveProfileToMem (prof, NULL, &size);
+	retval = cd_icc_new ();
+	ret = cd_icc_load_handle (retval, prof, CD_ICC_LOAD_FLAGS_NONE, NULL);
 	if (! ret) {
-		g_critical ("unable to compute profile size");
+		g_critical ("cd_icc_load_handle failed");
+		g_object_unref (retval);
+		retval = NULL;
 		goto out;
 	}
-
-	data = g_malloc (size);
-	ret = cmsSaveProfileToMem (prof, data, &size);
-	if (! ret) {
-		g_critical ("unable to make profile in memory");
-		goto out;
-	}
-
-	retval = g_bytes_new_take (data, size);
 
 out:
-	if (prof)
+	if (prof && ! retval)
 		cmsCloseProfile (prof);
 	if (curve[0])
 		cmsFreeToneCurve (curve[0]);

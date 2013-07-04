@@ -284,7 +284,7 @@ icc_storage_private_push_edid (struct icc_storage *stor, const struct edid *edid
 {
 	gchar *tmpname;
 	GFile *file;
-	GBytes *icc;
+	CdIcc *icc = NULL;
 	GError *err = NULL;
 	gboolean ret;
 
@@ -305,9 +305,7 @@ icc_storage_private_push_edid (struct icc_storage *stor, const struct edid *edid
 
 	g_debug ("WRITING profile for EDID %s", edid->cksum);
 
-	ret = g_file_replace_contents (file, g_bytes_get_data (icc, NULL), g_bytes_get_size (icc),
-				       NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION, NULL,
-				       NULL, &err);
+	ret = cd_icc_save_file (icc, file, CD_ICC_SAVE_FLAGS_NONE, NULL, &err);
 	if (! ret) {
 		g_critical ("unable to write file %s: %s", g_file_get_path (file), err->message);
 		g_error_free (err);
@@ -318,6 +316,8 @@ icc_storage_private_push_edid (struct icc_storage *stor, const struct edid *edid
 	do_add_file (stor, file);
 
 out:
+	if (icc)
+		g_object_unref (icc);
 	g_object_unref (file);
 }
 

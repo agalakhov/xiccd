@@ -24,12 +24,14 @@
 
 #include <glib.h>
 
+#include <colord.h>
+
 #include <X11/extensions/Xrandr.h>
 
 struct edid;
 
 void icc_to_gamma (XRRCrtcGamma *gamma, GBytes *icc);
-GBytes *icc_from_edid (const struct edid *edid);
+CdIcc *icc_from_edid (const struct edid *edid);
 gchar *icc_identify (GBytes *icc);
 
 #endif /* __ICC_H__ */

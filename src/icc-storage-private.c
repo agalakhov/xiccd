@@ -45,22 +45,7 @@ static gchar *
 identify_icc_file (GFile *file)
 {
 	gchar *retval, *tmp;
-	gchar *data = NULL;
-	gsize size = 0;
-	GError *err = NULL;
-	GBytes *icc;
-	gboolean ret;
-
-	ret = g_file_load_contents (file, NULL, &data, &size, NULL, &err);
-	if (! ret) {
-		g_critical ("unable to read %s: %s", g_file_get_path (file), err->message);
-		g_error_free (err);
-		return NULL;
-	}
-
-	icc = g_bytes_new_take (data, size);
-	tmp = icc_identify (icc);
-	g_bytes_unref (icc);
+	tmp = icc_identify (file);
 	retval = g_strdup_printf ("icc-%s", tmp);
 	g_free (tmp);
 	return retval;

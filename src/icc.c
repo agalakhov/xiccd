@@ -126,47 +126,21 @@ icc_from_edid (const struct edid *edid)
 	return icc;
 }
 
-static gchar *
-profile_id (GBytes *icc)
+gchar *
+icc_identify (GFile *file)
 {
-	cmsUInt8Number profid[16];
-	cmsHPROFILE prof = NULL;
 	gchar *retval = NULL;
-	guint i;
+	CdIcc *icc = cd_icc_new ();
+	gboolean ret;
 
-	prof = cmsOpenProfileFromMem (g_bytes_get_data (icc, NULL), g_bytes_get_size (icc));
-	if (! prof) {
-		g_critical ("corrupt ICC profile");
-		return NULL;
-	}
+	ret = cd_icc_load_file (icc, file, CD_ICC_LOAD_FLAGS_FALLBACK_MD5, NULL, NULL);
+	if (! ret)
+		goto out;
 
-	cmsGetHeaderProfileID (prof, profid);
-	for (i = 0; i < 16; ++i) {
-		if (profid[i] == 0)
-			goto out;
-	}
-
-	retval = g_new0 (gchar, 32+1);
-	for (i = 0; i < 16; ++i) {
-		g_snprintf (retval + (2 * i), 3, "%02x", profid[i]);
-	}
+	retval = g_strdup (cd_icc_get_checksum (icc));
 
 out:
-	cmsCloseProfile (prof);
-	return retval;
-}
-
-gchar *
-icc_identify (GBytes *icc)
-{
-	gchar *retval = NULL;
-
-	retval = profile_id (icc);
-	if (! retval)
-		retval = g_compute_checksum_for_data (G_CHECKSUM_MD5,
-						      g_bytes_get_data (icc, NULL),
-						      g_bytes_get_size (icc));
-
+	g_object_unref (icc);
 	return retval;
 }
 

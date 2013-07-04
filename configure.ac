@@ -11,7 +11,6 @@ PKG_CHECK_MODULES(X11, x11)
 PKG_CHECK_MODULES(XRANDR, xrandr >= 1.3)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.36)
 PKG_CHECK_MODULES(COLORD, colord >= 0.1.30)
-PKG_CHECK_MODULES(LCMS, lcms2)
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile

@@ -17,8 +17,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* TODO: newer versions of libcolord have ICC API. Remove this file if possible. */
-
 #ifndef __ICC_H__
 #define __ICC_H__
 
@@ -30,7 +28,7 @@
 
 struct edid;
 
-void icc_to_gamma (XRRCrtcGamma *gamma, GBytes *icc);
+void icc_to_gamma (XRRCrtcGamma *gamma, GBytes *iccraw);
 CdIcc *icc_from_edid (const struct edid *edid);
 gchar *icc_identify (GFile *file);
 

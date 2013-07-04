@@ -17,8 +17,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* TODO: newer versions of libcolord have ICC API. Remove this file if possible. */
-
 #include "icc.h"
 
 #include "edid.h"
@@ -27,7 +25,6 @@
 #include <stdlib.h>
 
 #include <colord.h>
-#include <lcms2.h>
 
 #include <X11/extensions/Xrandr.h>
 
@@ -44,42 +41,50 @@ reset_gamma (XRRCrtcGamma *gamma)
 }
 
 void
-icc_to_gamma (XRRCrtcGamma *gamma, GBytes *icc)
+icc_to_gamma (XRRCrtcGamma *gamma, GBytes *iccraw)
 {
-	cmsHPROFILE prof = NULL;
-	const cmsToneCurve **vcgt;
+	GError *err = NULL;
+	CdIcc *icc = NULL;
+	GPtrArray *vcgt = NULL;
+	gboolean ret;
+	guint i;
 
-	if (! icc) {
+	if (! iccraw) {
 		reset_gamma (gamma);
-		return;
+		goto out;
 	}
 
-	prof = cmsOpenProfileFromMem (g_bytes_get_data (icc, NULL), g_bytes_get_size (icc));
-	if (! prof) {
-		g_critical ("corrupt ICC profile");
+	icc = cd_icc_new ();
+	ret = cd_icc_load_data (icc, g_bytes_get_data (iccraw, NULL), g_bytes_get_size (iccraw),
+				CD_ICC_LOAD_FLAGS_NONE, &err);
+	if (! ret) {
+		g_critical ("corrupt ICC profile: %s", err->message);
+		g_error_free (err);
 		reset_gamma (gamma);
-		return;
+		goto out;
 	}
 
-	vcgt = cmsReadTag (prof, cmsSigVcgtTag);
-	if (vcgt && *vcgt) {
-		int i;
-		for (i = 0; i < gamma->size; ++i) {
-			cmsFloat32Number in =
-				(double) i / (double) (gamma->size - 1);
-			gamma->red[i] =
-				cmsEvalToneCurveFloat (vcgt[0], in) * 0xFFFF;
-			gamma->green[i] =
-				cmsEvalToneCurveFloat (vcgt[1], in) * 0xFFFF;
-			gamma->blue[i]  =
-				cmsEvalToneCurveFloat (vcgt[2], in) * 0xFFFF;
-		}
-	} else {
+	vcgt = cd_icc_get_vcgt (icc, gamma->size, NULL);
+	if (! vcgt) {
 		g_debug ("ICC profile has no VCGT");
 		reset_gamma (gamma);
+		goto out;
 	}
 
-	cmsCloseProfile (prof);
+	g_assert (vcgt->len == (guint) gamma->size);
+
+	for (i = 0; i < vcgt->len; ++i) {
+		CdColorRGB *color = (CdColorRGB *) g_ptr_array_index (vcgt, i);
+		gamma->red[i]   = color->R * 0xFFFF;
+		gamma->green[i] = color->G * 0xFFFF;
+		gamma->blue[i]  = color->B * 0xFFFF;
+	}
+
+out:
+	if (vcgt)
+		g_ptr_array_unref (vcgt);
+	if (icc)
+		g_object_unref (icc);
 }
 
 

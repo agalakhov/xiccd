@@ -105,11 +105,16 @@ update_device_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 			g_critical ("unable to connect to profile: %s", err->message);
 			g_error_free (err);
 		} else {
-			const gchar *file = cd_profile_get_filename (profile);
-			if (! file)
-				g_critical ("profile with no filename for display %s", disp->name);
-			g_debug ("loading profile '%s' for display %s", file, disp->name);
-			randr_display_apply_icc (disp, file);
+			CdIcc *icc = cd_profile_load_icc (profile, CD_ICC_LOAD_FLAGS_FALLBACK_MD5,
+							  NULL, &err);
+			if (! icc) {
+				g_critical ("can't get profile for display %s: %s", disp->name,
+										    err->message);
+				g_clear_error (&err);
+			}
+			g_debug ("loading profile '%s' for display %s",
+				 icc ? cd_icc_get_filename (icc) : "(none)", disp->name);
+			randr_display_apply_icc (disp, icc);
 		}
 	} else {
 		g_debug ("unloading profile for display %s", disp->name);

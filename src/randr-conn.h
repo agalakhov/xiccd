@@ -25,6 +25,8 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include <colord.h>
+
 G_BEGIN_DECLS
 
 
@@ -76,7 +78,7 @@ void randr_conn_update (RandrConn *conn);
 struct randr_display *randr_conn_find_display (RandrConn *conn, const gchar *name);
 struct randr_display *randr_conn_find_display_edid (RandrConn *conn, const gchar *edid_cksum);
 
-void randr_display_apply_icc (struct randr_display *disp, const gchar *file);
+void randr_display_apply_icc (struct randr_display *disp, CdIcc *icc);
 
 G_END_DECLS
 

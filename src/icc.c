@@ -41,25 +41,12 @@ reset_gamma (XRRCrtcGamma *gamma)
 }
 
 void
-icc_to_gamma (XRRCrtcGamma *gamma, GBytes *iccraw)
+icc_to_gamma (XRRCrtcGamma *gamma, CdIcc *icc)
 {
-	GError *err = NULL;
-	CdIcc *icc = NULL;
 	GPtrArray *vcgt = NULL;
-	gboolean ret;
 	guint i;
 
-	if (! iccraw) {
-		reset_gamma (gamma);
-		goto out;
-	}
-
-	icc = cd_icc_new ();
-	ret = cd_icc_load_data (icc, g_bytes_get_data (iccraw, NULL), g_bytes_get_size (iccraw),
-				CD_ICC_LOAD_FLAGS_NONE, &err);
-	if (! ret) {
-		g_critical ("corrupt ICC profile: %s", err->message);
-		g_error_free (err);
+	if (! icc) {
 		reset_gamma (gamma);
 		goto out;
 	}
@@ -83,8 +70,6 @@ icc_to_gamma (XRRCrtcGamma *gamma, GBytes *iccraw)
 out:
 	if (vcgt)
 		g_ptr_array_unref (vcgt);
-	if (icc)
-		g_object_unref (icc);
 }
 
 

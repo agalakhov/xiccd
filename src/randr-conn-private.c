@@ -386,7 +386,7 @@ randr_conn_private_finalize (struct randr_conn *conn)
 
 
 static inline void
-apply_gamma (struct randr_display_priv *disp, GBytes *icc)
+apply_gamma (struct randr_display_priv *disp, CdIcc *icc)
 {
 	Display *dpy = disp->conn->dpy;
 	XRRCrtcGamma *gamma = NULL;
@@ -416,7 +416,7 @@ apply_gamma (struct randr_display_priv *disp, GBytes *icc)
 }
 
 static inline void
-apply_icc (struct randr_display_priv *disp, GBytes *icc)
+apply_icc (struct randr_display_priv *disp, GBytes *icc_bytes)
 {
 	int res;
 	Display *dpy = disp->conn->dpy;
@@ -430,10 +430,10 @@ apply_icc (struct randr_display_priv *disp, GBytes *icc)
 		g_free (atname);
 	}
 
-	if (icc) {
+	if (icc_bytes) {
 		res = XChangeProperty (dpy, disp->root, at, XA_CARDINAL, 8, PropModeReplace,
-				       (unsigned char *) g_bytes_get_data (icc, NULL),
-				       g_bytes_get_size (icc));
+				       (unsigned char *) g_bytes_get_data (icc_bytes, NULL),
+				       g_bytes_get_size (icc_bytes));
 		oper = "XChangeProperty()";
 	} else {
 		res = XDeleteProperty (dpy, disp->root, at);
@@ -447,13 +447,24 @@ apply_icc (struct randr_display_priv *disp, GBytes *icc)
 }
 
 void
-randr_display_private_apply_icc (struct randr_display *disp, GBytes *icc)
+randr_display_private_apply_icc (struct randr_display *disp, CdIcc *icc)
 {
+	GBytes *icc_bytes = NULL;
+	GError *err = NULL;
 	struct randr_display_priv *pdisp = (struct randr_display_priv *) disp;
 	if (! pdisp->crtc) /* is display currently off? */
 		return;
+	if (icc) {
+		icc_bytes = cd_icc_save_data (icc, CD_ICC_SAVE_FLAGS_NONE, &err);
+		if (! icc_bytes) {
+			g_warning ("unable to get ICC data: %s", err->message);
+			g_clear_error (&err);
+		}
+	}
 	apply_gamma (pdisp, icc);
-	apply_icc (pdisp, icc);
+	apply_icc (pdisp, icc_bytes);
+	if (icc_bytes)
+		g_bytes_unref (icc_bytes);
 }
 
 struct randr_display *

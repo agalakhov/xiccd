@@ -28,7 +28,7 @@
 
 struct edid;
 
-void icc_to_gamma (XRRCrtcGamma *gamma, GBytes *iccraw);
+void icc_to_gamma (XRRCrtcGamma *gamma, CdIcc *icc);
 CdIcc *icc_from_edid (const struct edid *edid);
 gchar *icc_identify (GFile *file);
 

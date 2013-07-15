@@ -140,25 +140,9 @@ struct randr_display *randr_conn_find_display_edid (RandrConn *conn, const gchar
 }
 
 void
-randr_display_apply_icc (struct randr_display *disp, const gchar *file)
+randr_display_apply_icc (struct randr_display *disp, CdIcc *icc)
 {
-	gsize size;
-	gchar *data = NULL;
-	GBytes *bytes = NULL;
-	GError *err = NULL;
-	if (file) {
-		g_file_get_contents (file, &data, &size, &err);
-		if (! data) {
-			g_critical ("unable to load file '%s': %s", file, err->message);
-			g_error_free (err);
-			return;
-		}
-		if (size)
-			bytes = g_bytes_new_take (data, size);
-	}
-	randr_display_private_apply_icc (disp, bytes);
-	if (bytes)
-		g_bytes_unref (bytes);
+	randr_display_private_apply_icc (disp, icc);
 }
 
 /* vim: set ts=8 sw=8 tw=0 : */

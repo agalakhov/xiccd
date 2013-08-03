@@ -550,6 +550,8 @@ cd_connect_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 	g_signal_connect (daemon->stor, "removed",
 			  G_CALLBACK (cd_icc_store_file_removed_sig), daemon);
 
+	cd_icc_store_set_load_flags (daemon->stor, CD_ICC_LOAD_FLAGS_FALLBACK_MD5);
+
 	ret = cd_icc_store_search_kind (daemon->stor, CD_ICC_STORE_SEARCH_KIND_USER,
 				  CD_ICC_STORE_SEARCH_FLAGS_CREATE_LOCATION, NULL, &err);
 	if (! ret) {

@@ -4,8 +4,6 @@ xiccd_SOURCES = xiccd.c \
     dmi.h dmi.c \
     edid.h edid.c \
     icc.h icc.c \
-    icc-storage.h icc-storage.c \
-    icc-storage-private.h icc-storage-private.c \
     randr-conn.h randr-conn.c \
     randr-conn-private.h randr-conn-private.c
 

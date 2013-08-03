@@ -18,7 +18,7 @@
  */
 
 #include "randr-conn.h"
-#include "icc-storage.h"
+#include "icc.h"
 
 #include <glib.h>
 #include <glib-unix.h>
@@ -29,7 +29,7 @@ typedef struct _Daemon {
 	GMainLoop	*loop;
 	RandrConn	*rcon;
 	CdClient	*cli;
-	IccStorage	*stor;
+	CdIccStore	*stor;
 } Daemon;
 
 
@@ -65,6 +65,17 @@ signal_term (gpointer loop)
 	return FALSE;
 }
 
+static gchar *
+profile_id (CdIcc *icc)
+{
+	return g_strdup_printf ("icc-%s", cd_icc_get_checksum (icc));
+}
+
+static gchar *
+profile_filename (const struct edid *edid)
+{
+	return g_strdup_printf ("edid-%s.icc", edid->cksum);
+}
 
 static void
 update_device_cb (GObject *src, GAsyncResult *res, gpointer user_data)
@@ -256,6 +267,51 @@ cd_create_device_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 	g_object_unref (dev);
 }
 
+
+static void
+create_profile_from_edid(CdIccStore *store, const struct edid *edid)
+{
+	gchar *filename;
+	gchar *filepath;
+	GFile *file;
+	CdIcc *icc = NULL;
+	GError *err = NULL;
+	gboolean ret;
+
+	filename = profile_filename (edid);
+	filepath = g_build_filename (g_get_user_data_dir (), "icc", filename, NULL);
+	g_free (filename);
+	file = g_file_new_for_path (filepath);
+	g_free (filepath);
+
+	icc = cd_icc_store_find_by_filename (store, g_file_get_path (file));
+	if (icc) {
+		g_debug ("profile for edid %s already exists", edid->cksum);
+		goto out;
+	}
+
+	icc = icc_from_edid (edid);
+	if (! icc) {
+		g_critical ("profile for EDID %s was not created", edid->cksum);
+		goto out;
+	}
+
+	g_debug ("WRITING profile for EDID %s", edid->cksum);
+
+	ret = cd_icc_save_file (icc, file, CD_ICC_SAVE_FLAGS_NONE, NULL, &err);
+	if (! ret) {
+		g_critical ("unable to write file %s: %s", g_file_get_path (file), err->message);
+		g_error_free (err);
+		goto out;
+	}
+
+out:
+	if (icc)
+		g_object_unref (icc);
+	g_object_unref (file);
+}
+
+
 static void
 randr_display_added_sig (RandrConn *conn, struct randr_display *disp, Daemon *daemon)
 {
@@ -265,7 +321,7 @@ randr_display_added_sig (RandrConn *conn, struct randr_display *disp, Daemon *da
 
 	g_debug ("added display: '%s'", disp->name);
 
-	icc_storage_push_edid (daemon->stor, &disp->edid);
+	create_profile_from_edid (daemon->stor, &disp->edid);
 
 	g_hash_table_insert (props, CD_DEVICE_PROPERTY_KIND,
 			     (gchar *) cd_device_kind_to_string (CD_DEVICE_KIND_DISPLAY));
@@ -412,39 +468,49 @@ cd_client_delete_profile_cb (GObject *src, GAsyncResult *res, gpointer user_data
 }
 
 static void
-icc_storage_file_added_sig (IccStorage *stor, const gchar *file, const gchar *id, Daemon *daemon)
+cd_icc_store_file_added_sig (CdIccStore *stor, CdIcc *icc, Daemon *daemon)
 {
 	GHashTable *props;
+	gchar *id;
 
 	g_assert (stor == daemon->stor);
 
 	props = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+	id = profile_id (icc);
 
-	g_hash_table_insert (props, CD_PROFILE_PROPERTY_FILENAME, (gchar *) file);
-	g_hash_table_insert (props, CD_PROFILE_METADATA_FILE_CHECKSUM, (gpointer) id);
+	g_hash_table_insert (props, CD_PROFILE_PROPERTY_FILENAME,
+			     (gchar *) cd_icc_get_filename (icc));
+	g_hash_table_insert (props, CD_PROFILE_METADATA_FILE_CHECKSUM,
+			     (gchar *) cd_icc_get_checksum (icc));
 
 	cd_client_create_profile (daemon->cli, id, CD_OBJECT_SCOPE_TEMP, props,
 			       NULL, cd_client_create_profile_cb, daemon);
 
+	g_free (id);
 	g_hash_table_unref (props);
 }
 
 static void
-icc_storage_file_removed_sig (IccStorage *stor, const gchar *file, const gchar *id, Daemon *daemon)
+cd_icc_store_file_removed_sig (CdIccStore *stor, CdIcc *icc, Daemon *daemon)
 {
 	CdProfile *prof = NULL;
 	GError *err = NULL;
+	gchar *id;
 
 	g_assert (stor == daemon->stor);
 
-	prof = cd_client_find_profile_by_filename_sync (daemon->cli, file, NULL, &err);
+	id = profile_id (icc);
+
+	prof = cd_client_find_profile_sync (daemon->cli, id, NULL, &err);
 	if (! prof) {
-		g_debug ("profile not found so not removed: %s (%s): %s", id, file, err->message);
+		g_debug ("profile not found so not removed: %s: %s", id, err->message);
 		g_error_free (err);
-		return;
+		goto out;
 	}
 
 	cd_client_delete_profile (daemon->cli, prof, NULL, cd_client_delete_profile_cb, daemon);
+out:
+	g_free (id);
 }
 
 static void
@@ -478,11 +544,18 @@ cd_connect_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 	g_signal_connect (daemon->rcon, "display-removed",
 			  G_CALLBACK (randr_display_removed_sig), daemon);
 
-	g_signal_connect (daemon->stor, "file-added",
-			  G_CALLBACK (icc_storage_file_added_sig), daemon);
+	g_signal_connect (daemon->stor, "added",
+			  G_CALLBACK (cd_icc_store_file_added_sig), daemon);
 
-	g_signal_connect (daemon->stor, "file-removed",
-			  G_CALLBACK (icc_storage_file_removed_sig), daemon);
+	g_signal_connect (daemon->stor, "removed",
+			  G_CALLBACK (cd_icc_store_file_removed_sig), daemon);
+
+	ret = cd_icc_store_search_kind (daemon->stor, CD_ICC_STORE_SEARCH_KIND_USER,
+				  CD_ICC_STORE_SEARCH_FLAGS_CREATE_LOCATION, NULL, &err);
+	if (! ret) {
+		g_critical ("unable to watch profile store: %s", err->message);
+		g_clear_error (&err);
+	}
 
 	cd_client_get_devices_by_kind (daemon->cli,
 				       CD_DEVICE_KIND_DISPLAY,
@@ -494,8 +567,6 @@ cd_connect_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 				NULL,
 				cd_existing_profiles_cb,
 				daemon);
-
-	icc_storage_update (daemon->stor);
 
 	randr_conn_update (daemon->rcon);
 }
@@ -530,7 +601,7 @@ main (int argc, char *argv[])
 	daemon.loop = g_main_loop_new (NULL, FALSE);
 	daemon.rcon = randr_conn_new (config.display);
 	daemon.cli = cd_client_new ();
-	daemon.stor = icc_storage_new ();
+	daemon.stor = cd_icc_store_new ();
 
 	config_free ();
 

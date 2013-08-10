@@ -127,6 +127,7 @@ edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolea
 	const guint8 *d = (const guchar *) edid_data;
 	guint i;
 	guint8 cksum;
+	guint32 s;
 
 	memset (edid, 0, sizeof(*edid));
 
@@ -156,6 +157,14 @@ edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolea
 	edid->pnpid[1] = 'A' - 1 + ((d[8] << 3) & 0x18) + ((d[9] >> 5) & 0x07);
 	edid->pnpid[2] = 'A' - 1 + (d[9] & 0x1F);
 	edid->pnpid[3] = '\0';
+
+	/* maybe there isn't a ASCII serial number descriptor, so use this instead */
+	s = (guint32) d[0x0C+0];
+	s += (guint32) d[0x0C+1] * 0x100;
+	s += (guint32) d[0x0C+2] * 0x10000;
+	s += (guint32) d[0x0C+3] * 0x1000000;
+	if (s > 0)
+		edid->serial = g_strdup_printf ("%" G_GUINT32_FORMAT, s);
 
 	/* Byte 23 = gamma * 100 - 100 */
 	if (d[23] == 0xFF)

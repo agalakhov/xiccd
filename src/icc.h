@@ -17,20 +17,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* TODO: newer versions of libcolord have ICC API. Remove this file if possible. */
-
 #ifndef __ICC_H__
 #define __ICC_H__
 
 #include <glib.h>
 
+#include <colord.h>
+
 #include <X11/extensions/Xrandr.h>
 
 struct edid;
 
-void icc_to_gamma (XRRCrtcGamma *gamma, GBytes *icc);
-GBytes *icc_from_edid (const struct edid *edid);
-gchar *icc_identify (GBytes *icc);
+void icc_to_gamma (XRRCrtcGamma *gamma, CdIcc *icc);
+CdIcc *icc_from_edid (const struct edid *edid);
+gchar *icc_identify (GFile *file);
 
 #endif /* __ICC_H__ */
 

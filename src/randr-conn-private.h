@@ -25,6 +25,8 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include <colord.h>
+
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 
@@ -61,7 +63,7 @@ void randr_conn_private_finalize (struct randr_conn *conn);
 void randr_conn_private_update (struct randr_conn *conn);
 struct randr_display *randr_conn_private_find_display (struct randr_conn *conn,
 						       const gchar *key, guint offset);
-void randr_display_private_apply_icc (struct randr_display *disp, GBytes *icc);
+void randr_display_private_apply_icc (struct randr_display *disp, CdIcc *icc);
 
 
 G_END_DECLS

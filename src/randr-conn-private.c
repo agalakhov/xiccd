@@ -112,16 +112,14 @@ make_name (struct randr_display_priv *disp,
 	memset (arr, 0, sizeof(arr));
 	arr[i++] = "xrandr";
 
-	if (! disp->pub.is_laptop) {
-		if (use_edid && edid->vendor)
-			arr[i++] = edid->vendor;
+	if (use_edid && edid->vendor)
+		arr[i++] = edid->vendor;
 
-		if (use_edid && edid->model)
-			arr[i++] = edid->model;
+	if (use_edid && edid->model)
+		arr[i++] = edid->model;
 
-		if (use_edid && edid->serial)
-			arr[i++] = edid->serial;
-	}
+	if (use_edid && edid->serial)
+		arr[i++] = edid->serial;
 
 	/* last resort: use xrandr name */
 	if (i <= 1)

@@ -263,7 +263,8 @@ randr_display_added_sig (RandrConn *conn, struct randr_display *disp, Daemon *da
 
 	g_debug ("added display: '%s'", disp->name);
 
-	icc_storage_push_edid (daemon->stor, &disp->edid);
+	if (disp->edid.cksum)
+		icc_storage_push_edid (daemon->stor, &disp->edid);
 
 	g_hash_table_insert (props, CD_DEVICE_PROPERTY_KIND,
 			     (gchar *) cd_device_kind_to_string (CD_DEVICE_KIND_DISPLAY));

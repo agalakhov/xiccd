@@ -131,6 +131,15 @@ edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolea
 
 	memset (edid, 0, sizeof(*edid));
 
+	if (! edid_data)
+		edid_size = 0;
+	edid->cksum = g_compute_checksum_for_data (G_CHECKSUM_MD5, edid_data, edid_size);
+
+	if (edid_size == 0) {
+		g_warning ("EDID is empty");
+		return;
+	}
+
 	if (edid_size < 128) {
 		g_warning ("EDID too short");
 		return;
@@ -149,8 +158,6 @@ edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolea
 		g_warning ("EDID CRC bad");
 		return;
 	}
-
-	edid->cksum = g_compute_checksum_for_data (G_CHECKSUM_MD5, edid_data, edid_size);
 
 	/* Encoded PNP ID in bytes 8 and 9 */
 	edid->pnpid[0] = 'A' - 1 + ((d[8] >> 2) & 0x1F);

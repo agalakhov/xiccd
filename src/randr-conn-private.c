@@ -58,7 +58,7 @@ get_output_property (struct randr_conn *conn, RROutput out, Atom prop, Atom type
 			      AnyPropertyType, &act_type, &act_fmt,
 			      &size, &bytes_after, &data);
 
-	if (act_type != type || act_fmt != fmt) {
+	if (act_type != type || act_fmt != fmt || size == 0) {
 		XFree (data);
 		return NULL;
 	}

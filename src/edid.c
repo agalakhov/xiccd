@@ -112,15 +112,6 @@ edid_parse_descriptor (struct edid *edid, const guint8 *d)
 	}
 }
 
-static void
-edid_fill_defaults (struct edid *edid)
-{
-	if (! edid->vendor)
-		edid->vendor = g_strdup ("Unknown vendor");
-	if (! edid->model)
-		edid->model = g_strdup ("Unknown monitor");
-}
-
 void
 edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolean use_dmi)
 {
@@ -208,7 +199,7 @@ edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolea
 	for (i = 54; i < 126; i += 18) {
 		edid_parse_descriptor (edid, d + i);
 	}
-	edid_fill_defaults (edid);
+
 	g_debug ("EDID: monitor vendor=[%s]'%s' product='%s' serial='%s'",
 		 edid->pnpid, edid->vendor, edid->model, edid->serial);
 	g_debug ("EDID: red=(%f,%f) green=(%f,%f) blue=(%f,%f) white=(%f,%f) gamma=%f",

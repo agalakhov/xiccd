@@ -164,7 +164,7 @@ populate_display (struct randr_display_priv *disp, GBytes *edid, RROutput out)
 	disp->pub.is_laptop = is_laptop_conn (disp->conn, out)
 			   || is_laptop_name (disp->pub.xrandr_name);
 
-	edid_parse (&disp->pub.edid, edid_data, edid_size, disp->pub.is_laptop);
+	edid_parse (&disp->pub.edid, edid_data, edid_size, FALSE);
 
 	disp->pub.name = make_name (disp, &disp->pub.edid, (edid_size != 0));
 }

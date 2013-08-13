@@ -164,7 +164,7 @@ populate_display (struct randr_display_priv *disp, GBytes *edid, RROutput out)
 	disp->pub.is_laptop = is_laptop_conn (disp->conn, out)
 			   || is_laptop_name (disp->pub.xrandr_name);
 
-	edid_parse (&disp->pub.edid, edid_data, edid_size, disp->pub.is_laptop);
+	edid_parse (&disp->pub.edid, edid_data, edid_size, FALSE);
 
 	disp->pub.name = make_name (disp, &disp->pub.edid, (edid_size != 0));
 }
@@ -358,8 +358,8 @@ randr_conn_private_init (struct randr_conn *conn, const gchar *disp_name)
 	}
 
 	/* RandR 1.2 calls it "EDID_DATA" but we don't support 1.2 */
-	conn->edid_atom = XInternAtom (conn->dpy, "EDID", True);
-	conn->type_atom = XInternAtom (conn->dpy, "ConnectorType", True);
+	conn->edid_atom = XInternAtom (conn->dpy, "EDID", FALSE);
+	conn->type_atom = XInternAtom (conn->dpy, "ConnectorType", FALSE);
 
 	setup_events (conn);
 

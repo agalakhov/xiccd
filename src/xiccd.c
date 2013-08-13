@@ -555,7 +555,7 @@ cd_connect_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 
 	cd_icc_store_set_load_flags (daemon->stor, CD_ICC_LOAD_FLAGS_FALLBACK_MD5);
 
-	ret = cd_icc_store_search_kind (daemon->stor, CD_ICC_STORE_SEARCH_KIND_USER,
+	ret = cd_icc_store_search_kind (daemon->stor, CD_ICC_STORE_SEARCH_KIND_SYSTEM,
 				  CD_ICC_STORE_SEARCH_FLAGS_CREATE_LOCATION, NULL, &err);
 	if (! ret) {
 		g_critical ("unable to watch profile store: %s", err->message);

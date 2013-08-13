@@ -358,8 +358,8 @@ randr_conn_private_init (struct randr_conn *conn, const gchar *disp_name)
 	}
 
 	/* RandR 1.2 calls it "EDID_DATA" but we don't support 1.2 */
-	conn->edid_atom = XInternAtom (conn->dpy, "EDID", True);
-	conn->type_atom = XInternAtom (conn->dpy, "ConnectorType", True);
+	conn->edid_atom = XInternAtom (conn->dpy, "EDID", False);
+	conn->type_atom = XInternAtom (conn->dpy, "ConnectorType", False);
 
 	setup_events (conn);
 

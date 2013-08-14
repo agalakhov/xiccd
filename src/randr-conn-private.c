@@ -211,9 +211,9 @@ iterate_outputs (struct randr_conn *conn, int scr, GPtrArray *retval)
 	Window root = RootWindow (conn->dpy, scr);
 	RROutput primary = XRRGetOutputPrimary (conn->dpy, root);
 	XRRScreenResources *rsrc =
-		XRRGetScreenResourcesCurrent (conn->dpy, root);
+		XRRGetScreenResources (conn->dpy, root);
 	if (! rsrc) {
-		g_critical ("XRRGetScreenResourcesCurrent() failed"
+		g_critical ("XRRGetScreenResources() failed"
 			    " at screen %i", scr);
 		return;
 	}

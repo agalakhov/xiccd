@@ -98,20 +98,27 @@ icc_from_edid (const struct edid *edid)
 	/* deliberately not translated */
 	cd_icc_set_copyright (icc, NULL, "This profile is free of known copyright restrictions.");
 
-	cd_icc_set_description (icc, NULL, edid->model);
-	cd_icc_set_model (icc, NULL, edid->model);
-	cd_icc_set_manufacturer (icc, NULL, edid->vendor);
+	if (edid->model)
+		cd_icc_set_description (icc, NULL, edid->model);
+	if (edid->model)
+		cd_icc_set_model (icc, NULL, edid->model);
+	if (edid->vendor)
+		cd_icc_set_manufacturer (icc, NULL, edid->vendor);
 
 	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_CMF_PRODUCT, PACKAGE);
 	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_CMF_BINARY, g_get_prgname ());
 	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_CMF_VERSION, VERSION);
 
-	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MD5, edid->cksum);
-	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MODEL, edid->model);
+	if (edid->cksum)
+		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MD5, edid->cksum);
+	if (edid->model)
+		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MODEL, edid->model);
 	if (edid->serial)
 		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_SERIAL, edid->serial);
-	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MNFT, edid->pnpid);
-	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_VENDOR, edid->vendor);
+	if (edid->pnpid)
+		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MNFT, edid->pnpid);
+	if (edid->vendor)
+		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_VENDOR, edid->vendor);
 
 	return icc;
 }

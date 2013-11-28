@@ -304,8 +304,23 @@ poll_events (gint fd, GIOCondition condition, gpointer user_data)
 	while (XPending (conn->dpy)) {
 		XEvent ev;
 		XNextEvent(conn->dpy, &ev);
-		if (ev.xany.type - conn->event_base == RRScreenChangeNotify)
+		switch (ev.xany.type - conn->event_base) {
+		case RRScreenChangeNotify:
 			happened = TRUE;
+			break;
+		case RRNotify:
+			switch (((const XRRNotifyEvent*)&ev)->subtype) {
+			case RRNotify_CrtcChange:
+			case RRNotify_OutputChange:
+				happened = TRUE;
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
 	}
 
 	if (happened)

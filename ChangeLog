@@ -1,3 +1,12 @@
+xiccd 0.2.2
+
+    * Coredump fix
+    * XRandR hotplug fix
+
+xiccd 0.2.1
+
+    * Bugfixes
+
 xiccd 0.2.0
 
     * Use new libcolord API (1.0.2 or higher)

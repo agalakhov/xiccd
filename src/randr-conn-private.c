@@ -100,14 +100,11 @@ randr_display_free (struct randr_display_priv *disp)
 }
 
 static inline const gchar *
-make_name (struct randr_display_priv *disp,
-	   struct edid *edid, gboolean use_edid)
+make_name (struct randr_display_priv *disp, struct edid *edid, gboolean use_edid)
 {
 	int i = 0;
 	const gchar *arr[16];
 	const gchar *retval;
-	const gchar *dmi_vendor = NULL;
-	const gchar *dmi_product = NULL;
 
 	memset (arr, 0, sizeof(arr));
 	arr[i++] = "xrandr";
@@ -126,11 +123,6 @@ make_name (struct randr_display_priv *disp,
 		arr[i++] = disp->pub.xrandr_name;
 
 	retval = g_strjoinv ("-", (gchar**)arr);
-
-	if (dmi_vendor)
-		g_free ((gpointer) dmi_vendor);
-	if (dmi_product)
-		g_free ((gpointer) dmi_product);
 
 	return retval;
 }
@@ -164,7 +156,7 @@ populate_display (struct randr_display_priv *disp, GBytes *edid, RROutput out)
 	disp->pub.is_laptop = is_laptop_conn (disp->conn, out)
 			   || is_laptop_name (disp->pub.xrandr_name);
 
-	edid_parse (&disp->pub.edid, edid_data, edid_size, FALSE);
+	edid_parse (&disp->pub.edid, edid_data, edid_size);
 
 	disp->pub.name = make_name (disp, &disp->pub.edid, (edid_size != 0));
 }

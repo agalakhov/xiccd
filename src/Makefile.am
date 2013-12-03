@@ -1,7 +1,6 @@
 bin_PROGRAMS = xiccd
 
 xiccd_SOURCES = xiccd.c \
-    dmi.h dmi.c \
     edid.h edid.c \
     icc.h icc.c \
     randr-conn.h randr-conn.c \

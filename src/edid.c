@@ -18,7 +18,6 @@
  */
 
 #include "edid.h"
-#include "dmi.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -113,7 +112,7 @@ edid_parse_descriptor (struct edid *edid, const guint8 *d)
 }
 
 void
-edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolean use_dmi)
+edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size)
 {
 	const guint8 *d = (const guchar *) edid_data;
 	guint i;
@@ -185,14 +184,9 @@ edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolea
 	edid->white.Y = 1.0;
 
 	/* Extended info */
-	if (use_dmi) {
-		edid->vendor = dmi_query_vendor ();
-		edid->model = dmi_query_product ();
-		g_debug ("DMI: vendor='%s' product='%s'", edid->vendor, edid->model);
-	} else {
-		edid->vendor = edid_resolve_pnpid (edid->pnpid);
-		g_debug ("PNP: vendor=[%s]'%s'", edid->pnpid, edid->vendor);
-	}
+	edid->vendor = edid_resolve_pnpid (edid->pnpid);
+	g_debug ("PNP: vendor=[%s]'%s'", edid->pnpid, edid->vendor);
+
 	/* start of first descriptor = 54 */
 	/* end of descriptor block = 126 */
 	/* size of each descriptor = 18 */

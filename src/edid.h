@@ -41,7 +41,7 @@ struct edid {
 	double		gamma;
 };
 
-void edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size, gboolean use_dmi);
+void edid_parse (struct edid *edid, gconstpointer edid_data, gsize edid_size);
 void edid_free (struct edid *edid);
 
 #endif /* __EDID_H__ */

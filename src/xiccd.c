@@ -343,6 +343,10 @@ randr_display_added_sig (RandrConn *conn, struct randr_display *disp, Daemon *da
 			     disp->is_primary ? CD_DEVICE_METADATA_OUTPUT_PRIORITY_PRIMARY
 					      : CD_DEVICE_METADATA_OUTPUT_PRIORITY_SECONDARY);
 
+	if (disp->edid.cksum)
+		g_hash_table_insert (props, CD_DEVICE_METADATA_OUTPUT_EDID_MD5,
+				     (gchar *) disp->edid.cksum);
+
 	if (disp->is_laptop)
 		g_hash_table_insert (props, CD_DEVICE_PROPERTY_EMBEDDED, NULL);
 

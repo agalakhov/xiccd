@@ -1,3 +1,8 @@
+xiccd 0.2.3
+
+    * Removed obsolete DMI support
+    * xiccd now registers OutputEdidMd5 property for devices
+
 xiccd 0.2.2
 
     * Coredump fix

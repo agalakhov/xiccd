@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=xiccd
+GenericName=X color management daemon
+Comment=Applies color management profiles to your session
+Exec=xiccd
+Terminal=false
+Type=Application
+Categories=
+OnlyShowIn=XFCE;MATE;LXDE;

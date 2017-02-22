@@ -42,6 +42,7 @@ show_version (void)
 
 static struct {
 	const gchar	*display;
+	      gboolean	edid;
 } config;
 
 static GOptionEntry config_entries[] = {
@@ -50,6 +51,8 @@ static GOptionEntry config_entries[] = {
 		"Show version", NULL },
 	{ "display", 'd', 0, G_OPTION_ARG_STRING, &config.display,
 		"X server to contact", NULL },
+	{ "edid", 'e', 0, G_OPTION_ARG_NONE, &config.edid,
+		"Generate EDID profile", NULL },
 	{ NULL }
 };
 
@@ -324,7 +327,9 @@ randr_display_added_sig (RandrConn *conn, struct randr_display *disp, Daemon *da
 
 	g_debug ("added display: '%s'", disp->name);
 
-	create_profile_from_edid (daemon->stor, &disp->edid);
+	if (config.edid) {
+		create_profile_from_edid (daemon->stor, &disp->edid);
+	}
 
 	g_hash_table_insert (props, CD_DEVICE_PROPERTY_KIND,
 			     (gchar *) cd_device_kind_to_string (CD_DEVICE_KIND_DISPLAY));

@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([xiccd], [0.2.4])
+AC_INIT([xiccd], [0.2.4+git])
 
 AC_CONFIG_SRCDIR([src/xiccd.c])
 

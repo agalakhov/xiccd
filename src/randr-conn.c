@@ -106,6 +106,12 @@ randr_conn_class_init (RandrConnClass *klass)
 		NULL, NULL, NULL,
 		G_TYPE_NONE, 1, G_TYPE_POINTER);
 
+	randr_signals[SIG_DISCONNECTED] = g_signal_new ("disconnected",
+		G_TYPE_FROM_CLASS (obj_class), G_SIGNAL_RUN_LAST,
+		G_STRUCT_OFFSET (RandrConnClass, disconnected),
+		NULL, NULL, NULL,
+		G_TYPE_NONE, 0);
+
 	g_object_class_install_property (obj_class, PROP_DISPLAY,
 		g_param_spec_string ("display", NULL, "X Display", NULL,
 				     G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)
@@ -117,6 +123,12 @@ RandrConn *
 randr_conn_new (const gchar *display)
 {
 	RandrConn *obj = RANDR_CONN (g_object_new (RANDR_TYPE_CONN, "display", display, NULL));
+
+	if (obj->priv->dpy == NULL) {
+		g_object_unref(obj);
+		return NULL;
+	}
+
 	return obj;
 }
 

@@ -403,6 +403,13 @@ randr_display_removed_sig (RandrConn *conn, struct randr_display *disp, Daemon *
 	g_object_unref (device);
 }
 
+static void
+randr_disconnected (RandrConn *conn, Daemon *daemon)
+{
+	(void) daemon;
+	exit(0);
+}
+
 
 static void
 cd_existing_devices_cb (GObject *src, GAsyncResult *res, gpointer user_data)
@@ -556,6 +563,9 @@ cd_connect_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 	g_signal_connect (daemon->rcon, "display-removed",
 			  G_CALLBACK (randr_display_removed_sig), daemon);
 
+	g_signal_connect (daemon->rcon, "disconnected",
+			  G_CALLBACK (randr_disconnected), daemon);
+
 	g_signal_connect (daemon->stor, "added",
 			  G_CALLBACK (cd_icc_store_file_added_sig), daemon);
 
@@ -614,6 +624,12 @@ main (int argc, char *argv[])
 
 	daemon.loop = g_main_loop_new (NULL, FALSE);
 	daemon.rcon = randr_conn_new (config.display);
+
+	if (daemon.rcon == NULL) {
+		g_critical ("Cannot connect to X server. Exiting");
+		return 1;
+	}
+
 	daemon.cli = cd_client_new ();
 	daemon.stor = cd_icc_store_new ();
 

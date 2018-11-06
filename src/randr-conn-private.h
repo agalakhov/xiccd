@@ -53,6 +53,7 @@ struct randr_display_priv {
 enum {
 	SIG_DISPLAY_ADDED,
 	SIG_DISPLAY_REMOVED,
+	SIG_DISPLAY_CHANGED,
 	N_SIG
 };
 

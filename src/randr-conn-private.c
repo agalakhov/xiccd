@@ -246,6 +246,8 @@ randr_conn_private_update (struct randr_conn *conn)
 {
 	guint i, j;
 	GPtrArray *disps;
+	GPtrArray *added_disps = g_ptr_array_new_full (4, NULL);
+	GPtrArray *updated_disps = g_ptr_array_new_full (4, NULL);
 
 	if (! conn->dpy)
 		return;
@@ -253,21 +255,21 @@ randr_conn_private_update (struct randr_conn *conn)
 	disps = enum_displays (conn);
 	for (i = 0; i < disps->len; ++i) {
 		gboolean found = FALSE;
-		const struct randr_display *disp = (const struct randr_display *)
-						   g_ptr_array_index (disps, i);
+		struct randr_display *disp = (struct randr_display *)
+					     g_ptr_array_index (disps, i);
 		for (j = 0; j < conn->displays->len; ++j) {
-			const struct randr_display *odisp = (const struct randr_display *)
-							    g_ptr_array_index (conn->displays, j);
+			struct randr_display *odisp = (struct randr_display *)
+						      g_ptr_array_index (conn->displays, j);
 			if (same_display (odisp, disp)) {
 				g_ptr_array_remove_index_fast (conn->displays, j);
+				g_ptr_array_add (updated_disps, disp);
 				found = TRUE;
 				break;
 			}
 		}
 		if (found)
 			continue;
-		g_signal_emit (conn->object,
-			       randr_signals[SIG_DISPLAY_ADDED], 0, disp);
+		g_ptr_array_add (added_disps, disp);
 	}
 
 	for (j = 0; j < conn->displays->len; ++j) {
@@ -279,6 +281,24 @@ randr_conn_private_update (struct randr_conn *conn)
 
 	g_ptr_array_unref (conn->displays);
 	conn->displays = disps;
+
+	/* emitting added and changed signals after conn->displays is set */
+	for (j = 0; j < added_disps->len; ++j) {
+		const struct randr_display *disp = (const struct randr_display *)
+						   g_ptr_array_index (added_disps, j);
+		g_signal_emit (conn->object,
+			       randr_signals[SIG_DISPLAY_ADDED], 0, disp);
+	}
+
+	for (j = 0; j < updated_disps->len; ++j) {
+		const struct randr_display *disp = (const struct randr_display *)
+						   g_ptr_array_index (updated_disps, j);
+		g_signal_emit (conn->object,
+			       randr_signals[SIG_DISPLAY_CHANGED], 0, disp);
+	}
+
+	g_ptr_array_unref (added_disps);
+	g_ptr_array_unref (updated_disps);
 }
 
 
@@ -327,7 +347,10 @@ setup_events (struct randr_conn *conn)
 	int s;
 	for (s = 0; s < ScreenCount (conn->dpy); ++s) {
 		Window w = RootWindow (conn->dpy, s);
-		XRRSelectInput (conn->dpy, w, RROutputChangeNotifyMask);
+		XRRSelectInput (conn->dpy, w,
+				RRScreenChangeNotifyMask |
+				RRCrtcChangeNotifyMask |
+				RROutputChangeNotifyMask);
 	}
 	while (XPending (conn->dpy)) {
 		XEvent ev;
@@ -420,6 +443,38 @@ apply_gamma (struct randr_display_priv *disp, CdIcc *icc)
 	XRRFreeGamma (gamma);
 }
 
+static gboolean
+is_main_icc_profile (struct randr_display_priv *disp)
+{
+	int main_id = -1;
+	int laptop_id = -1;
+	int primary_id = -1;
+	guint i;
+
+	if (disp->pub.is_primary)
+		return TRUE;
+
+	for (i = 0; i < disp->conn->displays->len; ++i) {
+		struct randr_display_priv *odisp = g_ptr_array_index (disp->conn->displays, i);
+		if (! odisp->crtc)
+			continue;
+		if (main_id == -1)
+			main_id = odisp->pub.id;
+		if (odisp->pub.is_laptop)
+			laptop_id = odisp->pub.id;
+		if (odisp->pub.is_primary)
+			primary_id = odisp->pub.id;
+	}
+
+	if (primary_id >= 0) {
+		main_id = primary_id;
+	} else if (laptop_id >= 0) {
+		main_id = laptop_id;
+	}
+
+	return (disp->pub.id == main_id);
+}
+
 static inline void
 apply_icc (struct randr_display_priv *disp, GBytes *icc_bytes)
 {
@@ -427,15 +482,14 @@ apply_icc (struct randr_display_priv *disp, GBytes *icc_bytes)
 	Display *dpy = disp->conn->dpy;
 	const gchar *oper = NULL;
 	Atom at;
-	if (disp->pub.id == 0) {
-		at = XInternAtom (dpy, "_ICC_PROFILE", False);
-	} else {
-		gchar *atname = g_strdup_printf ("_ICC_PROFILE_%i", disp->pub.id);
-		at = XInternAtom (dpy, atname, False);
-		g_free (atname);
-	}
+
+	if (! is_main_icc_profile (disp))
+		return;
+
+	at = XInternAtom (dpy, "_ICC_PROFILE", False);
 
 	if (icc_bytes) {
+		g_debug ("setting _ICC_PROFILE for display %s", disp->pub.name);
 		res = XChangeProperty (dpy, disp->root, at, XA_CARDINAL, 8, PropModeReplace,
 				       (unsigned char *) g_bytes_get_data (icc_bytes, NULL),
 				       g_bytes_get_size (icc_bytes));

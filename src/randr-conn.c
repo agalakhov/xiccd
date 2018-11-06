@@ -106,6 +106,12 @@ randr_conn_class_init (RandrConnClass *klass)
 		NULL, NULL, NULL,
 		G_TYPE_NONE, 1, G_TYPE_POINTER);
 
+	randr_signals[SIG_DISPLAY_CHANGED] = g_signal_new ("display_changed",
+		G_TYPE_FROM_CLASS (obj_class), G_SIGNAL_RUN_LAST,
+		G_STRUCT_OFFSET (RandrConnClass, display_changed),
+		NULL, NULL, NULL,
+		G_TYPE_NONE, 1, G_TYPE_POINTER);
+
 	g_object_class_install_property (obj_class, PROP_DISPLAY,
 		g_param_spec_string ("display", NULL, "X Display", NULL,
 				     G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)

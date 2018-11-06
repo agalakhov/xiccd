@@ -402,6 +402,29 @@ randr_display_removed_sig (RandrConn *conn, struct randr_display *disp, Daemon *
 	g_object_unref (device);
 }
 
+static void
+randr_display_changed_sig (RandrConn *conn, struct randr_display *disp, Daemon *daemon)
+{
+	CdDevice *device = NULL;
+	GError *err = NULL;
+
+	g_assert (conn == daemon->rcon);
+	g_assert (daemon->cli != NULL);
+	g_debug ("changed display: '%s'", disp->name);
+
+	/* We do not want race conditions here */
+	device = cd_client_find_device_sync (daemon->cli, disp->name,
+					     NULL, &err);
+	if (! device) {
+		g_debug ("device %s not found so not changed: %s", disp->name, err->message);
+		g_error_free (err);
+		return;
+	}
+
+	update_device (device, daemon);
+
+	g_object_unref (device);
+}
 
 static void
 cd_existing_devices_cb (GObject *src, GAsyncResult *res, gpointer user_data)
@@ -554,6 +577,9 @@ cd_connect_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 
 	g_signal_connect (daemon->rcon, "display-removed",
 			  G_CALLBACK (randr_display_removed_sig), daemon);
+
+	g_signal_connect (daemon->rcon, "display-changed",
+			  G_CALLBACK (randr_display_changed_sig), daemon);
 
 	g_signal_connect (daemon->stor, "added",
 			  G_CALLBACK (cd_icc_store_file_added_sig), daemon);

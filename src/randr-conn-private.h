@@ -50,6 +50,12 @@ struct randr_display_priv {
 	RRCrtc			crtc;
 };
 
+struct randr_source {
+	GSource			parent;
+	struct randr_conn	*conn;
+	GPollFD			poll_fd;
+};
+
 enum {
 	SIG_DISPLAY_ADDED,
 	SIG_DISPLAY_REMOVED,

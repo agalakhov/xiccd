@@ -302,16 +302,21 @@ randr_conn_private_update (struct randr_conn *conn)
 }
 
 
+static gboolean
+randr_source_prepare (GSource *source, gint *timeout)
+{
+	(void) timeout;
+	struct randr_source *src = (struct randr_source *) source;
+	return (XPending (src->conn->dpy) > 0);
+}
 
 static gboolean
-poll_events (gint fd, GIOCondition condition, gpointer user_data)
+randr_source_dispatch (GSource *source, GSourceFunc callback, gpointer user_data)
 {
-	struct randr_conn *conn = (struct randr_conn *) user_data;
+	struct randr_conn *conn = ((struct randr_source *) source)->conn;
 	gboolean happened = FALSE;
-	(void) fd;
-
-	if (condition != G_IO_IN)
-		return TRUE;
+	(void) callback;
+	(void) user_data;
 
 	while (XPending (conn->dpy)) {
 		XEvent ev;
@@ -341,6 +346,34 @@ poll_events (gint fd, GIOCondition condition, gpointer user_data)
 	return TRUE;
 }
 
+static GSourceFuncs randr_source_funcs = {
+	randr_source_prepare,
+	NULL, /* check */
+	randr_source_dispatch,
+	NULL, /* finalize */
+	NULL, /* closure_callback */
+	NULL  /* closure_marshal */
+};
+
+static GSource *
+randr_source_new (struct randr_conn *conn)
+{
+	GSource *retval;
+	struct randr_source *src;
+
+	retval = g_source_new (&randr_source_funcs, sizeof (struct randr_source));
+	g_source_set_name (retval, "RandrSource");
+
+	src = (struct randr_source *) retval;
+	src->conn = conn;
+
+	src->poll_fd.fd = ConnectionNumber (conn->dpy);
+	src->poll_fd.events = G_IO_IN;
+	g_source_add_poll (retval, &src->poll_fd);
+
+	return retval;
+}
+
 static inline void
 setup_events (struct randr_conn *conn)
 {
@@ -356,7 +389,9 @@ setup_events (struct randr_conn *conn)
 		XEvent ev;
 		XNextEvent (conn->dpy, &ev);
 	}
-	g_unix_fd_add (ConnectionNumber (conn->dpy), G_IO_IN, poll_events, conn);
+	GSource *src = randr_source_new (conn);
+	g_source_attach (src, NULL);
+	g_source_unref (src);
 }
 
 void

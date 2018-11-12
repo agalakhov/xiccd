@@ -321,6 +321,21 @@ poll_events (gint fd, GIOCondition condition, gpointer user_data)
 	return TRUE;
 }
 
+static gboolean
+disconnected_event (gint fd, GIOCondition condition, gpointer user_data)
+{
+	struct randr_conn *conn = (struct randr_conn *) user_data;
+	(void) fd;
+
+	if(condition == G_IO_HUP) {
+		g_signal_emit (conn->object,
+			       randr_signals[SIG_DISCONNECTED], 0);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static inline void
 setup_events (struct randr_conn *conn)
 {
@@ -334,6 +349,7 @@ setup_events (struct randr_conn *conn)
 		XNextEvent (conn->dpy, &ev);
 	}
 	g_unix_fd_add (ConnectionNumber (conn->dpy), G_IO_IN, poll_events, conn);
+	g_unix_fd_add (ConnectionNumber (conn->dpy), G_IO_HUP, disconnected_event, conn);
 }
 
 void

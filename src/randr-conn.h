@@ -65,6 +65,7 @@ typedef struct _RandrConnClass {
 	GObjectClass parent;
 	void (*display_added) (RandrConn *conn, const struct randr_display *disp);
 	void (*display_removed) (RandrConn *conn, const struct randr_display *disp);
+	void (*disconnected) (RandrConn *conn);
 } RandrConnClass;
 
 

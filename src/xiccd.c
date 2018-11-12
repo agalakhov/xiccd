@@ -214,7 +214,6 @@ out:
 
 	if (device)
 		g_object_unref (device);
-	g_object_unref (profile);
 }
 
 

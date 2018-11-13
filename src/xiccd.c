@@ -122,7 +122,7 @@ update_device_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 			g_critical ("unable to connect to profile: %s", err->message);
 			g_error_free (err);
 		} else {
-			CdIcc *icc = cd_profile_load_icc (profile, CD_ICC_LOAD_FLAGS_FALLBACK_MD5,
+			CdIcc *icc = cd_profile_load_icc (profile, CD_ICC_LOAD_FLAGS_ALL,
 							  NULL, &err);
 			if (! icc) {
 				g_critical ("can't get profile for display %s: %s", disp->name,

@@ -67,6 +67,7 @@ extern guint randr_signals[N_SIG];
 
 void randr_conn_private_init (struct randr_conn *conn, const gchar *disp_name);
 void randr_conn_private_finalize (struct randr_conn *conn);
+void randr_conn_private_start (struct randr_conn *conn);
 void randr_conn_private_update (struct randr_conn *conn);
 struct randr_display *randr_conn_private_find_display (struct randr_conn *conn,
 						       const gchar *key, guint offset);

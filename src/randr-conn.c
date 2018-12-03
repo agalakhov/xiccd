@@ -127,9 +127,9 @@ randr_conn_new (const gchar *display)
 }
 
 void
-randr_conn_update (RandrConn *conn)
+randr_conn_start (RandrConn *conn)
 {
-	randr_conn_private_update (conn->priv);
+	randr_conn_private_start (conn->priv);
 }
 
 struct randr_display *

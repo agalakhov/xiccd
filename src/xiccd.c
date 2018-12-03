@@ -607,7 +607,7 @@ cd_connect_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 				cd_existing_profiles_cb,
 				daemon);
 
-	randr_conn_update (daemon->rcon);
+	randr_conn_start (daemon->rcon);
 }
 
 

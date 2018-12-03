@@ -74,7 +74,7 @@ GType randr_conn_get_type (void);
 
 RandrConn *randr_conn_new (const gchar *display);
 
-void randr_conn_update (RandrConn *conn);
+void randr_conn_start (RandrConn *conn);
 
 struct randr_display *randr_conn_find_display (RandrConn *conn, const gchar *name);
 struct randr_display *randr_conn_find_display_edid (RandrConn *conn, const gchar *edid_cksum);

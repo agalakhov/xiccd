@@ -385,13 +385,16 @@ setup_events (struct randr_conn *conn)
 				RRCrtcChangeNotifyMask |
 				RROutputChangeNotifyMask);
 	}
-	while (XPending (conn->dpy)) {
-		XEvent ev;
-		XNextEvent (conn->dpy, &ev);
-	}
 	GSource *src = randr_source_new (conn);
 	g_source_attach (src, NULL);
 	g_source_unref (src);
+}
+
+void
+randr_conn_private_start (struct randr_conn *conn)
+{
+	randr_conn_private_update (conn);
+	setup_events (conn);
 }
 
 void
@@ -425,8 +428,6 @@ randr_conn_private_init (struct randr_conn *conn, const gchar *disp_name)
 	/* RandR 1.2 calls it "EDID_DATA" but we don't support 1.2 */
 	conn->edid_atom = XInternAtom (conn->dpy, "EDID", False);
 	conn->type_atom = XInternAtom (conn->dpy, "ConnectorType", False);
-
-	setup_events (conn);
 
 	return;
 

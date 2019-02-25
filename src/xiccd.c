@@ -132,6 +132,8 @@ update_device_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 			g_debug ("loading profile '%s' for display %s",
 				 icc ? cd_icc_get_filename (icc) : "(none)", disp->name);
 			randr_display_apply_icc (disp, icc);
+			if (icc)
+				g_object_unref (icc);
 		}
 	} else {
 		g_debug ("unloading profile for display %s", disp->name);

@@ -1,3 +1,10 @@
+xiccd 0.3.0
+
+    * Correct X property setting for multiple screens
+    * Race fixes
+    * Memory leak fixes
+    * Add desktop files
+
 xiccd 0.2.3
 
     * Removed obsolete DMI support

@@ -1,6 +1,13 @@
-xiccd 0.2.4
+xiccd 0.3.1
 
 	* Systemd service
+
+xiccd 0.3.0
+
+    * Correct X property setting for multiple screens
+    * Race fixes
+    * Memory leak fixes
+    * Add desktop files
 
 xiccd 0.2.3
 
@@ -27,4 +34,4 @@ xiccd 0.1.1
 
 xiccd 0.1.0
 
-    * Initial release
+    * Initial release.

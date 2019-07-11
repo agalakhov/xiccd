@@ -1,0 +1,11 @@
+[Unit]
+Description=Xiccd Screen Color Profiler
+PartOf=dbus.service
+After=dbus.service
+
+[Service]
+ExecStart=/bin/xiccd
+Restart=always
+
+[Install]
+WantedBy=dbus.service

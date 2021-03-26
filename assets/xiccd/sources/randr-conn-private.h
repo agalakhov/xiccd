@@ -1,34 +1,12 @@
-/*
- * Copyright (C) 2013 Alexey Galakhov <agalakhov@gmail.com>
- *
- * Licensed under the GNU General Public License Version 3
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #ifndef __RANDR_CONN_PRIVATE_H__
 #define __RANDR_CONN_PRIVATE_H__
 
+#include <colord.h>
 #include "randr-conn.h"
-
 #include <glib.h>
 #include <glib-object.h>
-
-#include <colord.h>
-
-#include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
+#include <X11/Xlib.h>
 
 G_BEGIN_DECLS
 
@@ -72,7 +50,6 @@ void randr_conn_private_update (struct randr_conn *conn);
 struct randr_display *randr_conn_private_find_display (struct randr_conn *conn,
 						       const gchar *key, guint offset);
 void randr_display_private_apply_icc (struct randr_display *disp, CdIcc *icc);
-
 
 G_END_DECLS
 

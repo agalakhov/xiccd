@@ -1,28 +1,9 @@
-/*
- * Copyright (C) 2013 Alexey Galakhov <agalakhov@gmail.com>
- *
- * Licensed under the GNU General Public License Version 3
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
 
-#include "randr-conn.h"
 #include "icc.h"
-
+#include "randr-conn.h"
+#include <colord.h>
 #include <glib.h>
 #include <glib-unix.h>
-#include <colord.h>
 #include <string.h>
 
 typedef struct _Daemon {
@@ -32,27 +13,16 @@ typedef struct _Daemon {
 	CdIccStore	*stor;
 } Daemon;
 
-
-static void
-show_version (void)
-{
-	g_print ("%s - Version %s\n", g_get_application_name (), VERSION);
-	exit (0);
-}
-
 static struct {
 	const gchar	*display;
 	      gboolean	edid;
 } config;
 
 static GOptionEntry config_entries[] = {
-	{ "version", 'V', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK,
-		(void*)(intptr_t) show_version,
-		"Show version", NULL },
 	{ "display", 'd', 0, G_OPTION_ARG_STRING, &config.display,
-		"X server to contact", NULL },
+		"Uses a specific display", NULL },
 	{ "edid", 'e', 0, G_OPTION_ARG_NONE, &config.edid,
-		"Generate EDID profile", NULL },
+		"Generates a default color profile based on the display model", NULL },
 	{ NULL }
 };
 
@@ -218,7 +188,6 @@ out:
 		g_object_unref (device);
 }
 
-
 static void
 update_device (CdDevice *device, Daemon *daemon)
 {
@@ -230,7 +199,6 @@ update_profile (CdProfile *profile, Daemon *daemon)
 {
 	cd_profile_connect (profile, NULL, update_profile_cb, daemon);
 }
-
 
 static void
 cd_profile_added_sig (CdClient *client, CdProfile *profile, Daemon *daemon)
@@ -253,7 +221,6 @@ cd_device_changed_sig (CdClient *client, CdDevice *device, Daemon *daemon)
 	update_device (device, daemon);
 }
 
-
 static void
 cd_create_device_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 {
@@ -273,7 +240,6 @@ cd_create_device_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 
 	g_object_unref (dev);
 }
-
 
 static void
 create_profile_from_edid(CdIccStore *store, const struct edid *edid)
@@ -317,7 +283,6 @@ out:
 		g_object_unref (icc);
 	g_object_unref (file);
 }
-
 
 static void
 randr_display_added_sig (RandrConn *conn, struct randr_display *disp, Daemon *daemon)
@@ -611,8 +576,6 @@ cd_connect_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 
 	randr_conn_start (daemon->rcon);
 }
-
-
 
 int
 main (int argc, char *argv[])

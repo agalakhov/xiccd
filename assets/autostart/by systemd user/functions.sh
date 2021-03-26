@@ -36,10 +36,11 @@ CommandAsUser () {
 	local user="${1}"
 	local command="${*:2}"
 
-	local userId="$(id --user "${user}")"
+	local userId; userId="$(id --user "${user}")"
 	local bus="unix:path=/run/user/${userId}/bus"
 	local sudoAsUser="sudo -u ${user} DBUS_SESSION_BUS_ADDRESS=${bus}"
 	
+	#shellcheck disable=SC2086
 	${sudoAsUser} ${command}
 }
 

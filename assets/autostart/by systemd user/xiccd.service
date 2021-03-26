@@ -1,10 +1,11 @@
 [Unit]
 Description=Xiccd Screen Color Profiler
+Documentation=man:/usr/share/man/man8/xiccd.8.gz
 PartOf=dbus.service
 After=dbus.service
 
 [Service]
-ExecStart=/bin/xiccd
+ExecStart=/usr/bin/xiccd
 Restart=always
 
 [Install]

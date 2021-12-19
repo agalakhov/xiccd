@@ -1,0 +1,8 @@
+[Desktop Entry]
+Exec=xiccd
+Name=xiccd
+GenericName=X Color Management Daemon
+Comment=Applies color management profiles to your session
+Terminal=false
+Type=Application
+NotShowIn=GNOME;KDE;

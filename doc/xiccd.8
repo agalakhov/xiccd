@@ -1,0 +1,39 @@
+.TH XICCD "8" "March 2016" "xiccd" "System Administration Utilities"
+.SH NAME
+xiccd \- X color management daemon
+.SH SYNOPSIS
+.B xiccd [OPTION...]
+.SH DESCRIPTION
+xiccd is a simple bridge between colord and X. It performs the following
+tasks:
+.PP
+ * Enumerating displays and registering them in colord;
+ * Creating default ICC profiles based on EDID data;
+ * Applying ICC profiles provided by colord;
+ * Maintaining the user's private ICC storage directory.
+.PP
+It does not depend on any particular desktop environment nor toolkit and it
+should not be used in desktop environments that support color management
+natively, like GNOME and KDE do.
+.PP
+xiccd is usually automatically invoked by your desktop environment via
+.B /etc/xdg/autostart
+and there should not be any need to invoke this binary manually.
+.SS "Help Options:"
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show help options
+.SS "Application Options:"
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Show version
+.TP
+\fB\-d\fR DISPLAY, \fB\-\-display\fR DISPLAY
+X server to contact
+.TP
+\fB\-e\fR, \fB\-\-edid\fR
+Generate profiles by monitor EDID
+.SH AUTHORS
+.B xiccd
+was primarily written by Alexey Galakhov <agalakhov@gmail.com>. This manual page
+was written by Faidon Liambotis <paravoid@debian.org> for the Debian project.

@@ -1,6 +1,6 @@
 [Unit]
 Description=Xiccd Screen Color Profiler
-Documentation=man:/usr/share/man/man8/xiccd.8.gz
+Documentation=man:xiccd(8)
 PartOf=dbus.service
 After=dbus.service
 

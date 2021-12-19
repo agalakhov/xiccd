@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 AC_INIT([xiccd], [git])
 
-AC_CONFIG_SRCDIR([xiccd.c])
+AC_CONFIG_SRCDIR([src/xiccd.c])
 
 AM_INIT_AUTOMAKE([1.9 no-dist-gzip dist-xz tar-ustar])
 AC_LANG([C])

@@ -1,4 +1,3 @@
-
 #include "icc.h"
 #include "randr-conn.h"
 #include <colord.h>

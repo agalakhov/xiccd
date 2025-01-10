@@ -15,5 +15,5 @@ xiccd_LDADD = $(GLIB_LIBS) $(X11_LIBS) $(XRANDR_LIBS) $(COLORD_LIBS)
 dist_man_MANS = doc/xiccd.8
 dist_doc_DATA = README.md
 
-autostartdir = $(sysconfigdir)/xdg/autostart
+autostartdir = $(sysconfdir)/xdg/autostart
 autostart_DATA = etc/xdg/xiccd.desktop

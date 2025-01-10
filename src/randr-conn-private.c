@@ -17,6 +17,12 @@ print_x_error (struct randr_conn *conn, int err, const gchar *msg)
 	g_critical ("X error: %s: %s", msg, text);
 }
 
+static void
+x_free_func (void *obj)
+{
+	XFree (obj);
+}
+
 static GBytes *
 get_output_property (struct randr_conn *conn, RROutput out, Atom prop, Atom type, int fmt)
 {
@@ -38,7 +44,7 @@ get_output_property (struct randr_conn *conn, RROutput out, Atom prop, Atom type
 		return NULL;
 	}
 
-	return g_bytes_new_with_free_func (data, size * (fmt / 8), (GDestroyNotify) XFree, data);
+	return g_bytes_new_with_free_func (data, size * (fmt / 8), x_free_func, data);
 }
 
 static gboolean

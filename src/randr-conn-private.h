@@ -10,7 +10,7 @@
 
 G_BEGIN_DECLS
 
-struct randr_conn {
+typedef struct randr_conn {
 	GObject		*object;
 	Display		*dpy;
 	int		event_base;
@@ -18,7 +18,7 @@ struct randr_conn {
 	Atom		edid_atom;
 	Atom		type_atom;
 	GPtrArray	*displays;
-};
+} RandrConnPrivate;
 
 struct randr_display_priv {
 	struct randr_display	pub;

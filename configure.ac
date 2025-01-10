@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([xiccd], [git])
+AC_INIT([xiccd], [m4_esyscmd_s([git describe --abbrev=7 --dirty --always --tags])])
 
 AC_CONFIG_SRCDIR([src/xiccd.c])
 

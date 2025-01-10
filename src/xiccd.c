@@ -17,7 +17,17 @@ static struct {
 	      gboolean	edid;
 } config;
 
+static void
+show_version (void)
+{
+	g_print ("%s - Version %s\n", g_get_application_name (), VERSION);
+	exit (0);
+}
+
 static GOptionEntry config_entries[] = {
+	{ "version", 'V', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK,
+		(void*)(intptr_t) show_version,
+		"Show version", NULL },
 	{ "display", 'd', 0, G_OPTION_ARG_STRING, &config.display,
 		"Uses a specific display", NULL },
 	{ "edid", 'e', 0, G_OPTION_ARG_NONE, &config.edid,

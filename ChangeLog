@@ -1,0 +1,38 @@
+xiccd 0.4.0
+    * Compatibility update
+    * Use standard EDID parser instead of the own one
+    * Various small cleanups
+
+xiccd 0.3.0
+
+    * Correct X property setting for multiple screens
+    * Race fixes
+    * Memory leak fixes
+    * Add desktop files
+
+xiccd 0.2.3
+
+    * Removed obsolete DMI support
+    * xiccd now registers OutputEdidMd5 property for devices
+
+xiccd 0.2.2
+
+    * Coredump fix
+    * XRandR hotplug fix
+
+xiccd 0.2.1
+
+    * Bugfixes
+
+xiccd 0.2.0
+
+    * Use new libcolord API (1.0.2 or higher)
+
+xiccd 0.1.1
+
+    * Fix memory leak
+    * Fix device naming
+
+xiccd 0.1.0
+
+    * Initial release.

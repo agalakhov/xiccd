@@ -4,7 +4,6 @@ bin_PROGRAMS = xiccd
 
 xiccd_SOURCES = \
     src/xiccd.c \
-    src/edid.h src/edid.c \
     src/icc.h src/icc.c \
     src/randr-conn.h src/randr-conn.c \
     src/randr-conn-private.h src/randr-conn-private.c

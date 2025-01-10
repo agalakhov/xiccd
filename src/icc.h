@@ -5,10 +5,8 @@
 #include <glib.h>
 #include <X11/extensions/Xrandr.h>
 
-struct edid;
-
 void icc_to_gamma (XRRCrtcGamma *gamma, CdIcc *icc);
-CdIcc *icc_from_edid (const struct edid *edid);
+CdIcc *icc_from_edid (CdEdid *edid);
 gchar *icc_identify (GFile *file);
 
 #endif /* __ICC_H__ */

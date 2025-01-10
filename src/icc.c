@@ -1,5 +1,3 @@
-
-#include "edid.h"
 #include "icc.h"
 #include <colord.h>
 #include <glib.h>
@@ -52,7 +50,7 @@ out:
 
 
 CdIcc *
-icc_from_edid (const struct edid *edid)
+icc_from_edid (CdEdid *edid)
 {
 	CdIcc *icc;
 	GError *err = NULL;
@@ -62,9 +60,7 @@ icc_from_edid (const struct edid *edid)
 		return NULL;
 
 	icc = cd_icc_new ();
-	ret = cd_icc_create_from_edid (icc, edid->gamma,
-				       &edid->red, &edid->green, &edid->blue, &edid->white,
-				       &err);
+	ret = cd_icc_create_from_edid_data (icc, edid, &err);
 	if (! ret) {
 		g_critical ("unable to create profile from EDID: %s", err->message);
 		g_error_free (err);
@@ -73,30 +69,9 @@ icc_from_edid (const struct edid *edid)
 
 	cd_icc_set_kind (icc, CD_PROFILE_KIND_DISPLAY_DEVICE);
 
-	/* deliberately not translated */
-	cd_icc_set_copyright (icc, NULL, "This profile is free of known copyright restrictions.");
-
-	if (edid->model)
-		cd_icc_set_description (icc, NULL, edid->model);
-	if (edid->model)
-		cd_icc_set_model (icc, NULL, edid->model);
-	if (edid->vendor)
-		cd_icc_set_manufacturer (icc, NULL, edid->vendor);
-
 	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_CMF_PRODUCT, PACKAGE);
 	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_CMF_BINARY, g_get_prgname ());
 	cd_icc_add_metadata (icc, CD_PROFILE_METADATA_CMF_VERSION, VERSION);
-
-	if (edid->cksum)
-		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MD5, edid->cksum);
-	if (edid->model)
-		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MODEL, edid->model);
-	if (edid->serial)
-		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_SERIAL, edid->serial);
-	if (edid->pnpid)
-		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_MNFT, edid->pnpid);
-	if (edid->vendor)
-		cd_icc_add_metadata (icc, CD_PROFILE_METADATA_EDID_VENDOR, edid->vendor);
 
 	return icc;
 }

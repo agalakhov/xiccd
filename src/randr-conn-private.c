@@ -1,5 +1,3 @@
-
-#include "edid.h"
 #include "icc.h"
 #include "randr-conn.h"
 #include "randr-conn-private.h"
@@ -72,12 +70,12 @@ randr_display_free (struct randr_display_priv *disp)
 		g_free ((gpointer) disp->pub.name);
 	if (disp->pub.xrandr_name)
 		g_free ((gpointer) disp->pub.xrandr_name);
-	edid_free (&disp->pub.edid);
+        g_object_unref(disp->pub.edid);
 	g_free (disp);
 }
 
 static inline const gchar *
-make_name (struct randr_display_priv *disp, struct edid *edid, gboolean use_edid)
+make_name (struct randr_display_priv *disp, CdEdid *edid, gboolean use_edid)
 {
 	int i = 0;
 	const gchar *arr[16];
@@ -86,14 +84,18 @@ make_name (struct randr_display_priv *disp, struct edid *edid, gboolean use_edid
 	memset (arr, 0, sizeof(arr));
 	arr[i++] = "xrandr";
 
-	if (use_edid && edid->vendor)
-		arr[i++] = edid->vendor;
+	if (use_edid) {
+		const gchar *vendor = cd_edid_get_vendor_name (edid);
+		const gchar *model = cd_edid_get_monitor_name (edid);
+		const gchar *serial = cd_edid_get_serial_number (edid);
 
-	if (use_edid && edid->model)
-		arr[i++] = edid->model;
-
-	if (use_edid && edid->serial)
-		arr[i++] = edid->serial;
+		if (vendor)
+			arr[i++] = vendor;
+		if (model)
+			arr[i++] = model;
+		if (serial)
+			arr[i++] = serial;
+	}
 
 	/* last resort: use xrandr name */
 	if (i <= 1)
@@ -127,15 +129,22 @@ is_laptop_name (const gchar *name)
 static inline void
 populate_display (struct randr_display_priv *disp, GBytes *edid, RROutput out)
 {
-	gsize edid_size = 0;
-	gconstpointer edid_data = edid ? g_bytes_get_data (edid, &edid_size) : NULL;
+	gsize edid_size = edid ? g_bytes_get_size (edid) : 0;
 
 	disp->pub.is_laptop = is_laptop_conn (disp->conn, out)
 			   || is_laptop_name (disp->pub.xrandr_name);
 
-	edid_parse (&disp->pub.edid, edid_data, edid_size);
+	disp->pub.edid = cd_edid_new ();
+	if (edid_size > 0) {
+		GError *err = NULL;
+		gboolean ok = cd_edid_parse (disp->pub.edid, edid, &err);
+		if (! ok) {
+			g_warning ("unable to parse ICC: %s", err->message);
+			g_clear_error (&err);
+		}
+	}
 
-	disp->pub.name = make_name (disp, &disp->pub.edid, (edid_size != 0));
+	disp->pub.name = make_name (disp, disp->pub.edid, (edid_size != 0));
 }
 
 static inline struct randr_display_priv *
@@ -541,7 +550,8 @@ randr_display_private_apply_icc (struct randr_display *disp, CdIcc *icc)
 
 struct randr_display *
 randr_conn_private_find_display (struct randr_conn *conn,
-				 const gchar *key, guint offset)
+				 const gchar *key,
+				 get_find_key_fn get_find_key)
 {
 	guint i;
 
@@ -551,7 +561,7 @@ randr_conn_private_find_display (struct randr_conn *conn,
 	for (i = 0; i < conn->displays->len; ++i) {
 		struct randr_display *cand = (struct randr_display *)
 					     g_ptr_array_index (conn->displays, i);
-		if (! strcmp (G_STRUCT_MEMBER (const gchar *, cand, offset), key))
+		if (! strcmp (get_find_key(cand), key))
 			return cand;
 	}
 	return NULL;

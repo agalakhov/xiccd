@@ -1,7 +1,6 @@
 #ifndef __RANDR_CONN_H__
 #define __RANDR_CONN_H__
 
-#include "edid.h"
 #include <colord.h>
 #include <glib.h>
 #include <glib-object.h>
@@ -20,14 +19,14 @@ struct randr_display {
 
 	gboolean	is_laptop;
 	gboolean	is_primary;
-	struct edid	edid;
+	CdEdid		*edid;
 };
 
 GType randr_conn_get_type (void);
 RandrConn *randr_conn_new (const gchar *display);
 void randr_conn_start (RandrConn *conn);
-struct randr_display *randr_conn_find_display (RandrConn *conn, const gchar *name);
-struct randr_display *randr_conn_find_display_edid (RandrConn *conn, const gchar *edid_cksum);
+struct randr_display *randr_conn_find_display_by_name (RandrConn *conn, const gchar *name);
+struct randr_display *randr_conn_find_display_by_edid (RandrConn *conn, const gchar *edid_cksum);
 void randr_display_apply_icc (struct randr_display *disp, CdIcc *icc);
 
 G_END_DECLS

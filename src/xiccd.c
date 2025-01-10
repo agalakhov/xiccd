@@ -48,9 +48,10 @@ profile_id (CdIcc *icc)
 }
 
 static gchar *
-profile_filename (const struct edid *edid)
+profile_filename (CdEdid *edid)
 {
-	return g_strdup_printf ("edid-%s.icc", edid->cksum);
+	const gchar *cksum = cd_edid_get_checksum (edid);
+	return g_strdup_printf ("edid-%s.icc", cksum);
 }
 
 static void
@@ -77,7 +78,7 @@ update_device_cb (GObject *src, GAsyncResult *res, gpointer user_data)
         }
 
 	xrandr_id = cd_device_get_id (device);
-	disp = randr_conn_find_display (daemon->rcon, xrandr_id);
+	disp = randr_conn_find_display_by_name (daemon->rcon, xrandr_id);
 	if (! disp) {
 		g_critical ("device '%s' does not exist", xrandr_id);
 		goto out;
@@ -157,7 +158,7 @@ update_profile_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 	if (! edid_md5)
 		goto out;
 
-	disp = randr_conn_find_display_edid (daemon->rcon, edid_md5);
+	disp = randr_conn_find_display_by_edid (daemon->rcon, edid_md5);
 	if (! disp)
 		goto out;
 
@@ -242,7 +243,7 @@ cd_create_device_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 }
 
 static void
-create_profile_from_edid(CdIccStore *store, const struct edid *edid)
+create_profile_from_edid(CdIccStore *store, CdEdid *edid)
 {
 	gchar *filename;
 	gchar *filepath;
@@ -250,6 +251,7 @@ create_profile_from_edid(CdIccStore *store, const struct edid *edid)
 	CdIcc *icc = NULL;
 	GError *err = NULL;
 	gboolean ret;
+	const gchar *cksum = cd_edid_get_checksum (edid);
 
 	filename = profile_filename (edid);
 	filepath = g_build_filename (g_get_user_data_dir (), "icc", filename, NULL);
@@ -259,17 +261,17 @@ create_profile_from_edid(CdIccStore *store, const struct edid *edid)
 
 	icc = cd_icc_store_find_by_filename (store, g_file_get_path (file));
 	if (icc) {
-		g_debug ("profile for edid %s already exists", edid->cksum);
+		g_debug ("profile for edid %s already exists", cksum);
 		goto out;
 	}
 
 	icc = icc_from_edid (edid);
 	if (! icc) {
-		g_critical ("profile for EDID %s was not created", edid->cksum);
+		g_critical ("profile for EDID %s was not created", cksum);
 		goto out;
 	}
 
-	g_debug ("WRITING profile for EDID %s", edid->cksum);
+	g_debug ("WRITING profile for EDID %s", cksum);
 
 	ret = cd_icc_save_file (icc, file, CD_ICC_SAVE_FLAGS_NONE, NULL, &err);
 	if (! ret) {
@@ -287,6 +289,7 @@ out:
 static void
 randr_display_added_sig (RandrConn *conn, struct randr_display *disp, Daemon *daemon)
 {
+	const gchar *cksum;
 	GHashTable *props = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
 	g_assert (conn == daemon->rcon);
@@ -294,7 +297,7 @@ randr_display_added_sig (RandrConn *conn, struct randr_display *disp, Daemon *da
 	g_debug ("added display: '%s'", disp->name);
 
 	if (config.edid) {
-		create_profile_from_edid (daemon->stor, &disp->edid);
+		create_profile_from_edid (daemon->stor, disp->edid);
 	}
 
 	g_hash_table_insert (props, CD_DEVICE_PROPERTY_KIND,
@@ -304,9 +307,9 @@ randr_display_added_sig (RandrConn *conn, struct randr_display *disp, Daemon *da
 	g_hash_table_insert (props, CD_DEVICE_PROPERTY_COLORSPACE,
 			     (gchar *) cd_colorspace_to_string (CD_COLORSPACE_RGB));
 
-	g_hash_table_insert (props, CD_DEVICE_PROPERTY_VENDOR, (gchar *) disp->edid.vendor);
-	g_hash_table_insert (props, CD_DEVICE_PROPERTY_MODEL, (gchar *) disp->edid.model);
-	g_hash_table_insert (props, CD_DEVICE_PROPERTY_SERIAL, (gchar *) disp->edid.serial);
+	g_hash_table_insert (props, CD_DEVICE_PROPERTY_VENDOR, (gchar *) cd_edid_get_vendor_name (disp->edid));
+	g_hash_table_insert (props, CD_DEVICE_PROPERTY_MODEL, (gchar *) cd_edid_get_monitor_name (disp->edid));
+	g_hash_table_insert (props, CD_DEVICE_PROPERTY_SERIAL, (gchar *) cd_edid_get_serial_number (disp->edid));
 
 	g_hash_table_insert (props, CD_DEVICE_METADATA_XRANDR_NAME, (gchar *) disp->xrandr_name);
 
@@ -314,9 +317,9 @@ randr_display_added_sig (RandrConn *conn, struct randr_display *disp, Daemon *da
 			     disp->is_primary ? CD_DEVICE_METADATA_OUTPUT_PRIORITY_PRIMARY
 					      : CD_DEVICE_METADATA_OUTPUT_PRIORITY_SECONDARY);
 
-	if (disp->edid.cksum)
-		g_hash_table_insert (props, CD_DEVICE_METADATA_OUTPUT_EDID_MD5,
-				     (gchar *) disp->edid.cksum);
+	cksum = cd_edid_get_checksum (disp->edid);
+	if (cksum)
+		g_hash_table_insert (props, CD_DEVICE_METADATA_OUTPUT_EDID_MD5, (gchar *) cksum);
 
 	if (disp->is_laptop)
 		g_hash_table_insert (props, CD_DEVICE_PROPERTY_EMBEDDED, NULL);

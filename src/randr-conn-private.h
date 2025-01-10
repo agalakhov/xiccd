@@ -43,12 +43,15 @@ enum {
 
 extern guint randr_signals[N_SIG];
 
+typedef const gchar *(*get_find_key_fn)(struct randr_display *);
+
 void randr_conn_private_init (struct randr_conn *conn, const gchar *disp_name);
 void randr_conn_private_finalize (struct randr_conn *conn);
 void randr_conn_private_start (struct randr_conn *conn);
 void randr_conn_private_update (struct randr_conn *conn);
 struct randr_display *randr_conn_private_find_display (struct randr_conn *conn,
-						       const gchar *key, guint offset);
+						       const gchar *key,
+						       get_find_key_fn get_find_key);
 void randr_display_private_apply_icc (struct randr_display *disp, CdIcc *icc);
 
 G_END_DECLS

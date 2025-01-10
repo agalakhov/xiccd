@@ -109,19 +109,29 @@ randr_conn_start (RandrConn *conn)
 	randr_conn_private_start (priv);
 }
 
-struct randr_display *
-randr_conn_find_display (RandrConn *conn, const gchar *name)
+static const gchar *
+get_name_key (struct randr_display *dpy)
 {
-	struct randr_conn *priv = randr_conn_get_instance_private (conn);
-	return randr_conn_private_find_display (priv, name,
-						G_STRUCT_OFFSET (struct randr_display, name));
+	return dpy->name;
 }
 
-struct randr_display *randr_conn_find_display_edid (RandrConn *conn, const gchar *edid_cksum)
+struct randr_display *
+randr_conn_find_display_by_name (RandrConn *conn, const gchar *name)
 {
 	struct randr_conn *priv = randr_conn_get_instance_private (conn);
-	return randr_conn_private_find_display (priv, edid_cksum,
-						G_STRUCT_OFFSET (struct randr_display, edid.cksum));
+	return randr_conn_private_find_display (priv, name, get_name_key);
+}
+
+static const gchar *
+get_edid_key (struct randr_display *dpy)
+{
+	return cd_edid_get_checksum (dpy->edid);
+}
+
+struct randr_display *randr_conn_find_display_by_edid (RandrConn *conn, const gchar *edid_cksum)
+{
+	struct randr_conn *priv = randr_conn_get_instance_private (conn);
+	return randr_conn_private_find_display (priv, edid_cksum, get_edid_key);
 }
 
 void

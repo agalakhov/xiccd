@@ -27,7 +27,7 @@ RandrConn *randr_conn_new (const gchar *display);
 void randr_conn_start (RandrConn *conn);
 struct randr_display *randr_conn_find_display_by_name (RandrConn *conn, const gchar *name);
 struct randr_display *randr_conn_find_display_by_edid (RandrConn *conn, const gchar *edid_cksum);
-void randr_display_apply_icc (struct randr_display *disp, CdIcc *icc);
+void randr_display_apply_icc (struct randr_display *disp, CdIcc *icc, gboolean no_gamma);
 
 G_END_DECLS
 

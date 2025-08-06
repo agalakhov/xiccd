@@ -15,6 +15,7 @@ typedef struct _Daemon {
 static struct {
 	const gchar	*display;
 	      gboolean	edid;
+	      gboolean	no_gamma;
 } config;
 
 static void
@@ -32,6 +33,8 @@ static GOptionEntry config_entries[] = {
 		"Uses a specific display", NULL },
 	{ "edid", 'e', 0, G_OPTION_ARG_NONE, &config.edid,
 		"Generates a default color profile based on the display model", NULL },
+	{ "no-gamma", 'G', 0, G_OPTION_ARG_NONE, &config.no_gamma,
+		"Do not change display gamma tables", NULL },
 	{ NULL }
 };
 
@@ -111,13 +114,13 @@ update_device_cb (GObject *src, GAsyncResult *res, gpointer user_data)
 			}
 			g_debug ("loading profile '%s' for display %s",
 				 icc ? cd_icc_get_filename (icc) : "(none)", disp->name);
-			randr_display_apply_icc (disp, icc);
+			randr_display_apply_icc (disp, icc, config.no_gamma);
 			if (icc)
 				g_object_unref (icc);
 		}
 	} else {
 		g_debug ("unloading profile for display %s", disp->name);
-		randr_display_apply_icc (disp, NULL);
+		randr_display_apply_icc (disp, NULL, config.no_gamma);
 	}
 
 out:

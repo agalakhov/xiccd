@@ -534,7 +534,7 @@ apply_icc (struct randr_display_priv *disp, GBytes *icc_bytes)
 }
 
 void
-randr_display_private_apply_icc (struct randr_display *disp, CdIcc *icc)
+randr_display_private_apply_icc (struct randr_display *disp, CdIcc *icc, gboolean no_gamma)
 {
 	GBytes *icc_bytes = NULL;
 	GError *err = NULL;
@@ -548,7 +548,8 @@ randr_display_private_apply_icc (struct randr_display *disp, CdIcc *icc)
 			g_clear_error (&err);
 		}
 	}
-	apply_gamma (pdisp, icc);
+	if (!no_gamma)
+		apply_gamma (pdisp, icc);
 	apply_icc (pdisp, icc_bytes);
 	if (icc_bytes)
 		g_bytes_unref (icc_bytes);

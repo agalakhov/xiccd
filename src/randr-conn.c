@@ -135,9 +135,9 @@ struct randr_display *randr_conn_find_display_by_edid (RandrConn *conn, const gc
 }
 
 void
-randr_display_apply_icc (struct randr_display *disp, CdIcc *icc)
+randr_display_apply_icc (struct randr_display *disp, CdIcc *icc, gboolean no_gamma)
 {
-	randr_display_private_apply_icc (disp, icc);
+	randr_display_private_apply_icc (disp, icc, no_gamma);
 }
 
 /* vim: set ts=8 sw=8 tw=0 : */

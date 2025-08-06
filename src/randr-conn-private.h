@@ -52,7 +52,7 @@ void randr_conn_private_update (struct randr_conn *conn);
 struct randr_display *randr_conn_private_find_display (struct randr_conn *conn,
 						       const gchar *key,
 						       get_find_key_fn get_find_key);
-void randr_display_private_apply_icc (struct randr_display *disp, CdIcc *icc);
+void randr_display_private_apply_icc (struct randr_display *disp, CdIcc *icc, gboolean no_gamma);
 
 G_END_DECLS
 
